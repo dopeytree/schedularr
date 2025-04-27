@@ -977,7 +977,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
         <div className="text-center">
           <p className="text-lg text-gray-300 mb-4">Welcome!</p>
           <div className="relative mx-auto mb-4 w-16 h-16">
-            <img src={logo} alt="Schedularr Logo" className="w-full h-full" style={{ filter: 'invert(0) brightness(8) sepia(10) hue-rotate(166deg) saturate(10)' }} />
+            <img src={logo} alt="Schedularr Logo" className="w-full h-full" style={{ filter: 'brightness(100)' }} />
           </div>
           <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-2">
             Schedularr
@@ -1020,7 +1020,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <h1 className="text-4xl font-extrabold flex items-center">
               <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Schedularr</span>
               <span className="relative w-8 h-8 ml-2">
-                <img src={logo} alt="Schedularr Logo" className="w-full h-full" style={{ filter: 'invert(0) brightness(8) sepia(10) hue-rotate(166deg) saturate(10)' }} />
+                <img src={logo} alt="Schedularr Logo" className="w-full h-full" style={{ filter: 'brightness(100)' }} />
               </span>
             </h1>
           </div>
