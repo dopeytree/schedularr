@@ -2,7 +2,7 @@
 
 # Set the source and destination directories
 SRC_DIR="/Users/ed/Downloads/Grandad Care Scheduler/Schedularr/src"
-DEST_DIR="/Users/ed/Downloads/Grandad Care Scheduler/Schedularr/Grok"
+DEST_DIR="/Users/ed/Downloads/Grandad Care Scheduler/Schedularr/grok"
 LOG_FILE="$DEST_DIR/script_log.txt"
 
 # Create the destination directory if it doesn't exist
