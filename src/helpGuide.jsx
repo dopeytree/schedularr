@@ -1,9 +1,19 @@
 import React from 'react';
-import { cn } from 'clsx'; // Assuming you have a utility for classnames
+import clsx from 'clsx';
 
-const helpGuide = ({ className }) => {
+const cn = (...args) => clsx(...args);
+
+const HelpGuide = ({ className }) => {
   return (
-    <div className={cn("text-sm text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left", className)}>
+    <div 
+      className={cn(
+        "text-sm text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left transform transition-all duration-300 ease-in-out origin-top",
+        "scale-y-0 opacity-0", // Initial state: hidden and scaled down
+        "data-[visible=true]:scale-y-100 data-[visible=true]:opacity-100", // Visible state: full size and visible
+        className
+      )}
+      data-visible="true" // This will be controlled by the parent component
+    >
       <p className="mb-2 font-bold">
         Schedularr spices up your google calendar with a fresh 'Schedularr' calendar, making it a blast to sort out care for the elderly, childcare, pet sitting, or swapping chores with mates. Set rates in £ or 🍺, go wild, and make calendars cool again! 🎉
       </p>
@@ -28,4 +38,4 @@ const helpGuide = ({ className }) => {
   );
 };
 
-export default helpGuide;
+export default HelpGuide;

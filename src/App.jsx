@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import logo from './assets/logo.svg';
 import { emojiBlast } from "emoji-blast";
+import RandomEnding from './components/randomEnding.jsx'; // Import the new RandomEnding component
 
 // Version number for the app
-const VERSION = "v0.48";
+const VERSION = "v0.61";
 
 // Utility function for class names
 const cn = (...args) => clsx(...args);
@@ -1038,22 +1039,60 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
       )}
       {!isSignedIn ? (
         <div className="text-center">
-          <p className="text-lg text-gray-300 mb-4">Welcome!</p>
+          <p className="text-lg text-gray-300 mb-8">It's time to:</p>
+         
           <div className="relative mx-auto mb-4 w-16 h-16">
             <img src={logo} alt="Schedularr Logo" className="w-full h-full transition-transform duration-300 hover:scale-125" style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-2">
+          
+          
+          <h1 className="mb-2 text-5xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-2">
             Schedularr
           </h1>
-          <p className="text-lg text-gray-300 mb-4">Helping You Book Life 🏝️</p>
-          <Button
+          
+   {/* Replace the old static paragraph with the RandomEnding component */}
+   <RandomEnding />
+   
+      {/* <s className="text-base text-red-400">&nbsp;cancel&nbsp;</s>
+      <a className="text-base text-green-400">&nbsp;&nbsp;book&nbsp;&nbsp;</a>
+      <br></br> */}
+          {/* The following static text was removed and replaced by RandomEnding */}
+          {/* <p className="text-lg text-gray-300 mb-8">
+  <s className="text-red-300">Don’t</s> use Schedularr if you'd  rather be at the beach 🏝️
+</p> */}
+          {/* <p className="text-lg text-gray-300 mb-4">Helping You Book Life 🏝️</p> */}
+
+{/* Replace Button with Google Sign-In Button */}
+        <button className="gsi-material-button mx-auto py-3 px-6 mb-2 mr-2 transition-grow duration-300 hover:scale-100 p-1" onClick={handleSignIn}>
+              <div className="gsi-material-button-state"></div>
+              <div className="gsi-material-button-content-wrapper">
+                <div className="gsi-material-button-icon">
+                  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                    <path fill="none" d="M0 0h48v48H0z"></path>
+                  </svg>
+                </div>
+                
+                <span className="gsi-material-button-contents">Sign in with Google</span>
+                <span style={{ display: 'none' }}>Sign in with Google</span>
+              </div>
+            </button>
+
+<br></br>
+          {/* <Button
             onClick={handleSignIn}
             variant="gradient"
             className="py-3 px-6 text-lg font-semibold flex items-center justify-center mx-auto mb-2"
             buttonGradient={buttonGradient}
           >
             <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">login</span> Login with Google
-          </Button>
+          </Button> */}
+
+
+
           <div className="text-center">
             <Button
               variant="share"
@@ -1061,29 +1100,43 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               onClick={() => setShowGuide(!showGuide)}
               buttonGradient="dark-grey"
             >
-              Admin Guide
+            Guide
             </Button>
             {showGuide && (
-              <div className="text-sm text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left">
-                <p className="mb-2">
-                  Schedularr uses your Google account to create a new Google Calendar that you can share with others for quick bookings. Sign in with Google to get started.
+              <div className="text-sm text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left transform transition-all duration-300 ease-in-out origin-top scale-y-0 opacity-0 data-[visible=true]:scale-y-100 data-[visible=true]:opacity-100" data-visible="true">
+                <p className="mb-2 font-bold">
+                Rule the Scheduling Galaxy 🌀
                 </p>
-                <p className="mt-2">For detailed instructions, visit the Admin tab after signing in. For help, visit <a href="https://support.google.com/calendar/answer/37082" target="_blank" className="text-blue-400 underline">Google Calendar Help</a> or <a href="https://developers.google.com/identity" target="_blank" className="text-blue-400 underline">Google Identity Docs</a>.</p>
+                <p className="mb-2">
+                    Schedularr spices up your google calendar with a declarative 'Schedularr' calendar, making it a blast to sort out childcare, care for the elderly, pet sitting, or swapping chores with mates. 
+                    </p>
+                <p className="mb-2">
+                    - Set rates in £ or 🍺, go wild, and make calendars cool again! 🎉
+                  </p>
+                <p className="mb-2">
+                  - Sign in with Google to get started.
+                </p>
+                <p className="mt-2">
+                  - Visit the Admin tab after signing in for more detailed instructions.
+                </p>
               </div>
             )}
+          </div>
+          <div className="text-center">
             <p className="text-[10px] text-gray-400 opacity-70 mt-2">
               <a onClick={handleSkipLogin} className="text-blue-400 hover:underline cursor-pointer">- skip -</a>
             </p>
           </div>
         </div>
       ) : (
+        
         <>
           <div className="text-center mb-4 flex flex-col items-center">
             <p className="text-lg text-gray-300 mb-2">Welcome, {userName}!</p>
             <h1 className="text-4xl font-extrabold flex items-center">
               <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Schedularr</span>
               <span className="relative w-8 h-8 ml-2">
-                <img src={logo} alt="Schedularr Logo" className="w-full h-full transition-transform duration-300 hover:scale-125" style={{ filter: 'brightness(0) invert(1)' }} />
+                <img src={logo} alt="Schedularr Logo" className="w-full h-full " style={{ filter: 'brightness(0) invert(1)' }} />
               </span>
             </h1>
           </div>
