@@ -638,7 +638,7 @@ const App = () => {
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
-      }
+      }     
     };
   }, [isSignedIn, isAnimating]);
 
