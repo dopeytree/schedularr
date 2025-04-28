@@ -347,6 +347,7 @@ const TabsList = ({ className, ...props }) => (
     {...props}
   />
 );
+
 const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gradient", buttonGradient, ...props }) => {
   const baseStyles = "flex-1 py-3 px-6 text-lg font-semibold flex items-center justify-center transition-all duration-300";
   const variants = {
@@ -369,12 +370,36 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
       buttonGradient === "beige-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
       "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
   };
+  const hoverStyles = {
+    gradient: buttonGradient === "grey-yellow" ? "from-gray-600 to-yellow-700" :
+      buttonGradient === "green-cyan" ? "from-green-600 to-cyan-700" :
+      buttonGradient === "dark-grey" ? "from-gray-800 to-gray-900" :
+      buttonGradient === "red-orange" ? "from-red-600 to-orange-700" :
+      buttonGradient === "retro-pink" ? "from-pink-600 to-purple-700" :
+      buttonGradient === "retro-teal" ? "from-teal-600 to-cyan-700" :
+      buttonGradient === "brown-gold" ? "from-amber-800 to-yellow-700" :
+      buttonGradient === "beige-grey" ? "from-gray-400 to-gray-600" :
+      "from-blue-700 to-purple-700",
+    gradientReverse: buttonGradient === "grey-yellow" ? "from-gray-600 to-yellow-700" :
+      buttonGradient === "green-cyan" ? "from-green-600 to-cyan-700" :
+      buttonGradient === "dark-grey" ? "from-gray-800 to-gray-900" :
+      buttonGradient === "red-orange" ? "from-red-600 to-orange-700" :
+      buttonGradient === "retro-pink" ? "from-pink-600 to-purple-700" :
+      buttonGradient === "retro-teal" ? "from-teal-600 to-cyan-700" :
+      buttonGradient === "brown-gold" ? "from-amber-800 to-yellow-700" :
+      buttonGradient === "beige-grey" ? "from-gray-400 to-gray-600" :
+      "from-blue-700 to-purple-700",
+  };
   return (
     <button
       className={cn(
         baseStyles,
         variants[variant],
-        value === tabValue ? "bg-indigo-800 text-cyan-300" : "",
+        value === tabValue ? cn(
+          variant === "gradient" ? `bg-gradient-to-r ${hoverStyles.gradient}` :
+          variant === "gradientReverse" ? `bg-gradient-to-l ${hoverStyles.gradientReverse}` : "",
+          "text-cyan-300"
+        ) : "",
         className
       )}
       onClick={() => onValueChange(tabValue)}
@@ -382,6 +407,44 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
     />
   );
 };
+
+
+// const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gradient", buttonGradient, ...props }) => {
+//   const baseStyles = "flex-1 py-3 px-6 text-lg font-semibold flex items-center justify-center transition-all duration-300";
+//   const variants = {
+//     gradient: buttonGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
+//       buttonGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
+//       buttonGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
+//       buttonGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
+//       buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
+//       buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
+//       buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
+//       buttonGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+//       "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
+//     gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
+//       buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
+//       buttonGradient === "dark-grey" ? "bg-gradient-to-l from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
+//       buttonGradient === "red-orange" ? "bg-gradient-to-l from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
+//       buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
+//       buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
+//       buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
+//       buttonGradient === "beige-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+//       "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
+//   };
+//   return (
+//     <button
+//       className={cn(
+//         baseStyles,
+//         variants[variant],
+//         value === tabValue ? "bg-indigo-800 text-cyan-300" : "",
+//         className
+//       )}
+//       onClick={() => onValueChange(tabValue)}
+//       {...props}
+//     />
+//   );
+// };
+
 const TabsContent = ({ value, tabValue, className, ...props }) => (
   <div
     className={cn(
