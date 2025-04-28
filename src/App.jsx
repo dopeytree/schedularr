@@ -1256,6 +1256,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient={inputGradient}
                       />
                     </div>
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1279,17 +1280,20 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient={inputGradient}
                           onClick={() => setActiveTab('settings')}
                         />
-                        <Input
-                          type="text"
-                          value={cost || ''}
-                          readOnly
-                          placeholder="Fee"
-                          className={cn("w-4/5 cursor-pointer", cost ? 'text-white' : 'text-gray-400')}
-                          inputGradient={inputGradient}
-                          onClick={() => setActiveTab('settings')}
-                        />
+                        <div className="relative w-4/5">
+                          <Input
+                            type="text"
+                            value={cost || ''}
+                            readOnly
+                            className={cn("pr-12 cursor-pointer", cost ? 'text-white' : 'text-gray-400')}
+                            inputGradient={inputGradient}
+                            onClick={() => setActiveTab('settings')}
+                          />
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">fee</span>
+                        </div>
                       </div>
                     </div>
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
