@@ -1051,7 +1051,10 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
           </h1>
           
    {/* Replace the old static paragraph with the RandomEnding component */}
-   <RandomEnding />
+   
+   <div className="relative left-1/2 transform -translate-x-1/2 w-full max-w-[300px] text-lg mb-8">
+  <RandomEnding className="relative left-1/2 transform -translate-x-1/2 w-full max-w-[300px]" />
+</div>
    
       {/* <s className="text-base text-red-400">&nbsp;cancel&nbsp;</s>
       <a className="text-base text-green-400">&nbsp;&nbsp;book&nbsp;&nbsp;</a>
@@ -1063,23 +1066,27 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
           {/* <p className="text-lg text-gray-300 mb-4">Helping You Book Life 🏝️</p> */}
 
 {/* Replace Button with Google Sign-In Button */}
-        <button className="gsi-material-button mx-auto py-3 px-6 mb-2 mr-2 transition-grow duration-300 hover:scale-100 p-1" onClick={handleSignIn}>
-              <div className="gsi-material-button-state"></div>
-              <div className="gsi-material-button-content-wrapper">
-                <div className="gsi-material-button-icon">
-                  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                    <path fill="none" d="M0 0h48v48H0z"></path>
-                  </svg>
-                </div>
-                
-                <span className="gsi-material-button-contents">Sign in with Google</span>
-                <span style={{ display: 'none' }}>Sign in with Google</span>
-              </div>
-            </button>
+      {/* Replace Button with Google Sign-In Button */}
+<button
+  className="gsi-material-button mx-auto py-3 px-6 mb-2 mr-2 transition-grow duration-300 p-1"
+  onClick={handleSignIn}
+  style={{ cursor: 'pointer' }}
+>
+  <div className="gsi-material-button-state"></div>
+  <div className="gsi-material-button-content-wrapper">
+    <div className="gsi-material-button-icon">
+      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+        <path fill="none" d="M0 0h48v48H0z"></path>
+      </svg>
+    </div>
+    <span className="gsi-material-button-contents">Sign in with Google</span>
+    <span style={{ display: 'none' }}>Sign in with Google</span>
+  </div>
+</button>
 
 <br></br>
           {/* <Button
@@ -1093,7 +1100,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
 
 
 
-          <div className="text-center">
+          {/* <div className="text-center relative">
             <Button
               variant="share"
               className="py-2 px-4 text-lg font-semibold"
@@ -1103,7 +1110,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             Guide
             </Button>
             {showGuide && (
-              <div className="text-sm text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left transform transition-all duration-300 ease-in-out origin-top scale-y-0 opacity-0 data-[visible=true]:scale-y-100 data-[visible=true]:opacity-100" data-visible="true">
+              <div className=" text-xs text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left transform transition-all duration-300 ease-in-out origin-top scale-y-0 opacity-0 data-[visible=true]:scale-y-100 data-[visible=true]:opacity-100" data-visible="true">
                 <p className="mb-2 font-bold">
                 Rule the Scheduling Galaxy 🌀
                 </p>
@@ -1121,7 +1128,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                 </p>
               </div>
             )}
-          </div>
+          </div> */}
+
           <div className="text-center">
             <p className="text-[10px] text-gray-400 opacity-70 mt-2">
               <a onClick={handleSkipLogin} className="text-blue-400 hover:underline cursor-pointer">- skip -</a>

@@ -32,8 +32,8 @@ const endings2 = [
 const RandomEnding = () => {
   const [randomTagline, setRandomTagline] = useState('');
   const [randomFollowUp, setRandomFollowUp] = useState('');
-  const [maxWidth, setMaxWidth] = useState(null);
-  const firstLineRef = useRef(null);
+
+  
 
   // Pick random tagline and follow-up
   useEffect(() => {
@@ -43,33 +43,23 @@ const RandomEnding = () => {
     setRandomFollowUp(endings2[followUpIndex]);
   }, []);
 
-  // Measure the width of the first line
-  useEffect(() => {
-    if (firstLineRef.current) {
-      const width = firstLineRef.current.offsetWidth;
-      setMaxWidth(width);
-    }
-  }, []);
+
 
   // Render the structure with tagline, gap, and follow-up
   return (
     <>
-      <p ref={firstLineRef} className="text-base text-gray-300 mb-1">
+      <div classname="">
+      <p className="text-base text-gray-300 mb-1 break-words">
          {randomTagline}
       </p>
-      <p className="text-gray-300 mb-2 whitespace-normal"
-        style={maxWidth ? { maxWidth: `${maxWidth}px` } : {}}
-      >
-       
-      </p>
+      
       <p className="text-gray-600 mb-2 whitespace-normal">
       &#8212;
       </p>
-      <p className="text-xs text-gray-400 mb-10 whitespace-normal"
-        style={maxWidth ? { maxWidth: `${maxWidth}px` } : {}}
-      >
+      <p className="text-xs text-gray-500 mb-10 whitespace-normal break-words">
         {randomFollowUp}
       </p>
+      </div>
     </>
   );
 };
