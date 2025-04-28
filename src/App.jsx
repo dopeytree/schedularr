@@ -1130,32 +1130,37 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       Booking Sent! 🎉
                     </Alert>
                   )}
+
                   <div className="space-y-6">
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>public</span>
-                      <Input
-                        name="name"
-                        value={event.name}
-                        onChange={handleInputChange}
-                        placeholder="Visiting Mars"
-                        required
-                        inputGradient={inputGradient}
-                      />
-                    </div>
+                    
+                  <div className="relative flex items-center">
+                    <span className={cn(
+                      "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                      inputGradient === "grey-yellow" ? "text-yellow-400" :
+                      inputGradient === "blue-purple" ? "text-blue-400" :
+                      inputGradient === "green-cyan" ? "text-green-400" :
+                      inputGradient === "dark-grey" ? "text-gray-400" :
+                      inputGradient === "red-orange" ? "text-red-400" :
+                      inputGradient === "retro-pink" ? "text-pink-400" :
+                      inputGradient === "retro-teal" ? "text-teal-400" :
+                      inputGradient === "brown-gold" ? "text-amber-400" :
+                      inputGradient === "beige-grey" ? "text-gray-600" :
+                      "text-blue-400"
+                    )}>public</span>
+                    <Input
+                      name="name"
+                      value={event.name}
+                      onChange={handleInputChange}
+                      placeholder="Visiting Mars"
+                      required
+                      inputGradient={inputGradient}
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
+                  </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center">
+                      <div className="relative flex items-center">
                         <span className={cn(
                           "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                           inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1176,9 +1181,13 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           onChange={handleInputChange}
                           required
                           inputGradient={inputGradient}
+                          className="pr-8"
                         />
+                       <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
-                      <div className="flex items-center">
+                      
+
+                      <div className="relative flex items-center">
                         <span className={cn(
                           "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                           inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1201,9 +1210,11 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           required
                           inputGradient={inputGradient}
                         />
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
                     </div>
-                    <div className="flex items-center">
+                    
+                    <div className="relative flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                         inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1227,12 +1238,14 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           step="0.5"
                           min="0.5"
                           required
-                          className="pr-12"
+                          className="pr-20"
                           inputGradient={inputGradient}
                         />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">hrs</span>
+                        <span className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-400">hrs</span>
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
                     </div>
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1247,14 +1260,18 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "beige-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>event_available</span>
-                      <Input
-                        type="text"
-                        value={endTime}
-                        readOnly
-                        placeholder="End Time"
-                        className={endTime ? 'text-white' : 'text-gray-400'}
-                        inputGradient={inputGradient}
-                      />
+                      <div className="relative w-full">
+                        <Input
+                          type="text"
+                          value={endTime}
+                          readOnly
+                          placeholder=""
+                          className={cn("pr-12", endTime ? 'text-white' : 'text-gray-400')}
+                          inputGradient={inputGradient}
+                        />
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">end</span>
+                        
+                      </div>
                     </div>
 
                     <div className="flex items-center">
