@@ -3,12 +3,16 @@ import clsx from 'clsx';
 import logo from './assets/logo.svg';
 import { emojiBlast } from "emoji-blast";
 import RandomEnding from './components/randomEnding.jsx'; // Import the new RandomEnding component
+import Tooltip from './Tooltip.jsx'; // Import the new Tooltip component
 
 // Version number for the app
 const VERSION = "v0.61";
 
 // Utility function for class names
 const cn = (...args) => clsx(...args);
+
+
+
 
 // Fetch user's calendar list
 const fetchCalendarList = async (accessToken) => {
@@ -1140,7 +1144,9 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
         
         <>
           <div className="text-center mb-4 flex flex-col items-center">
+          <Tooltip message="I am tooltip 🚀" position="bottom">
             <p className="text-lg text-gray-300 mb-2">Welcome, {userName}!</p>
+            </Tooltip>
             <h1 className="text-4xl font-extrabold flex items-center">
               <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Schedularr</span>
               <span className="relative w-8 h-8 ml-2">
@@ -1148,10 +1154,15 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               </span>
             </h1>
           </div>
+          
+
+          
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
               <TabsTrigger tabValue="booking" value={activeTab} onValueChange={setActiveTab} variant="gradient" buttonGradient={buttonGradient}>
                 <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">event</span> Booking
+                
               </TabsTrigger>
               <TabsTrigger tabValue="settings" value={activeTab} onValueChange={setActiveTab} variant="gradientReverse" buttonGradient={buttonGradient}>
                 <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">settings</span> Admin
@@ -1160,6 +1171,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <TabsContent tabValue="booking" value={activeTab}>
               <Card className="w-full max-w-[400px] mx-auto">
                 <CardHeader>
+                  
                   <CardTitle inputGradient={inputGradient}>{whoWhat}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1195,6 +1207,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                   <div className="space-y-6">
                     
                   <div className="relative flex items-center">
+                  <Tooltip message="Event 🚀" position="bottom">
                     <span className={cn(
                       "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                       inputGradient === "grey-yellow" ? "text-yellow-400" :
@@ -1208,6 +1221,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       inputGradient === "beige-grey" ? "text-gray-600" :
                       "text-blue-400"
                     )}>public</span>
+                    </Tooltip>
                     <Input
                       name="name"
                       value={event.name}
@@ -1217,11 +1231,13 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       inputGradient={inputGradient}
                       className="pr-8"
                     />
+                    
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                   </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="relative flex items-center">
+                      <Tooltip message="Event Date 📅" position="bottom">
                         <span className={cn(
                           "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                           inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1235,6 +1251,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "beige-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>event</span>
+                        </Tooltip>
                         <Input
                           type="date"
                           name="startDate"
@@ -1249,6 +1266,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       
 
                       <div className="relative flex items-center">
+                      <Tooltip message="Event start time ⏱️" position="bottom">
                         <span className={cn(
                           "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                           inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1262,6 +1280,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "beige-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>access_time</span>
+                        </Tooltip>
                         <Input
                           type="time"
                           name="startTime"
@@ -1276,6 +1295,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                     </div>
                     
                     <div className="relative flex items-center">
+                    <Tooltip message="How long is event ⏳" position="bottom">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                         inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1289,6 +1309,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "beige-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>hourglass_empty</span>
+                      </Tooltip>
                       <div className="relative w-full">
                         <Input
                           type="number"
@@ -1308,6 +1329,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                     </div>
 
                     <div className="flex items-center">
+                    <Tooltip message="[auto] End time ⏰" position="bottom">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                         inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1321,6 +1343,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "beige-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>event_available</span>
+                      </Tooltip>
                       <div className="relative w-full">
                         <Input
                           type="text"
@@ -1336,6 +1359,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                     </div>
 
                     <div className="flex items-center">
+                    <Tooltip message="[auto] Currency & Fee 💰/🍰" position="bottom">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                         inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1349,6 +1373,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "beige-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>account_balance_wallet</span>
+                      </Tooltip>
                       <div className="flex items-center w-full gap-[2px]">
                         <Input
                           type="text"
@@ -1359,6 +1384,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           onClick={() => setActiveTab('settings')}
                         />
                         <div className="relative w-4/5">
+                        <Tooltip message="[auto] agreed trade 🤝" position="bottom">
                           <Input
                             type="text"
                             value={cost || ''}
@@ -1368,11 +1394,13 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                             onClick={() => setActiveTab('settings')}
                           />
                           <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">fee</span>
+                          </Tooltip>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center">
+                    <Tooltip message="Notes 📝" position="bottom">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
                         inputGradient === "grey-yellow" ? "text-yellow-400" : 
@@ -1386,6 +1414,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "beige-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>edit</span>
+                      </Tooltip>
                       <Input
                         name="note"
                         value={event.note}

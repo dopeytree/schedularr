@@ -21,6 +21,31 @@ button,
   cursor: pointer !important;
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* New tooltip styles */
+  [data-tooltip] {
+    @apply relative;
+  }
+
+  /* Debug style for tooltips to ensure visibility */
+.tooltip-debug {
+    transition-property: opacity !important;
+    transition-duration: 300ms !important;
+    transition-timing-function: ease-in-out !important;
+  }
+ 
+  
+ 
+  
+  /* Ensure existing styles are not overridden */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
 /* Google Sign-In Button Styles */
 .gsi-material-button {
