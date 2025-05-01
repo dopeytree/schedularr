@@ -266,6 +266,30 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
   );
 };
 
+
+const Divider = ({ inputGradient }) => (
+  <hr
+    className={cn(
+      "border-0 h-px w-full my-4",
+      inputGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600" :
+      inputGradient === "blue-purple" ? "bg-gradient-to-r from-blue-600 to-purple-600" :
+      inputGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600" :
+      inputGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800" :
+      inputGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600" :
+      inputGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600" :
+      inputGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600" :
+      inputGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600" :
+      inputGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500" :
+      "bg-gradient-to-r from-blue-600 to-purple-600"
+    )}
+    style={{
+      boxShadow: inputGradient === "grey-yellow" ? "0 0 10px rgba(255, 215, 0, 0.5)" :
+        inputGradient === "blue-purple" ? "0 0 10px rgba(139, 92, 246, 0.5)" :
+        inputGradient === "dark-grey" ? "0 0 10px rgba(100, 100, 100, 0.5)" : "0 0 10px rgba(139, 92, 246, 0.5)"
+    }}
+  />
+);
+
 const Card = ({ className, ...props }) => (
   <div
     className={cn(
@@ -1204,6 +1228,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                     </Alert>
                   )}
 
+                  {/* // Form for booking begins here */}
+
                   <div className="space-y-6">
                     
                   <div className="relative flex items-center">
@@ -1327,6 +1353,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
                     </div>
+                    
+                      <Divider inputGradient={inputGradient} />
 
                     <div className="flex items-center">
                     <Tooltip message="[auto] End time ⏰" position="bottom">
@@ -1399,6 +1427,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       </div>
                     </div>
 
+                    <Divider inputGradient={inputGradient} />
+
                     <div className="flex items-center">
                     <Tooltip message="Notes 📝" position="bottom">
                       <span className={cn(
@@ -1457,7 +1487,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         onClick={() => setShowGuide(!showGuide)}
                         buttonGradient={buttonGradient}
                       >
-                        Admin Guide
+                        How To Guide
                       </Button>
                       {showGuide && (
                         <div className="text-sm text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left">
@@ -1731,6 +1761,11 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         {shareSuccess}
                       </Alert>
                     )}
+
+
+                  <Divider inputGradient={inputGradient} />
+
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1786,6 +1821,10 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">e.g., £, $, 🍺</span>
                       </div>
                     </div>
+
+
+                  <Divider inputGradient={inputGradient} />
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1869,6 +1908,9 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         Default Colors
                       </Button>
                     </div>
+
+                  <Divider inputGradient={inputGradient} /> 
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
