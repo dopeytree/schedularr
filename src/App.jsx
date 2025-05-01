@@ -479,8 +479,8 @@ const App = () => {
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem('currency') || '£';
   });
-  const [whoWhat, setWhoWhat] = useState(() => {
-    return localStorage.getItem('whoWhat') || 'A Grande Day Out';
+  const [UserAppTitle, setUserAppTitle] = useState(() => {
+    return localStorage.getItem('UserAppTitle') || 'A Grande Day Out';
   });
   const [calendarId, setCalendarId] = useState(() => {
     return localStorage.getItem('calendarId') || '';
@@ -537,13 +537,13 @@ const App = () => {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('hourlyRate', hourlyRate);
     localStorage.setItem('currency', currency);
-    localStorage.setItem('whoWhat', whoWhat);
+    localStorage.setItem('UserAppTitle', UserAppTitle);
     localStorage.setItem('calendarId', calendarId);
     localStorage.setItem('calendarName', calendarName);
     localStorage.setItem('inputGradient', inputGradient);
     localStorage.setItem('buttonGradient', buttonGradient);
     localStorage.setItem('devMode', devMode);
-  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, whoWhat, calendarId, calendarName, inputGradient, buttonGradient, devMode]);
+  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, UserAppTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode]);
 
   // Fetch calendar list when signed in
   useEffect(() => {
@@ -775,8 +775,8 @@ const App = () => {
     setCurrency(e.target.value);
   };
 
-  const handleWhoWhatChange = (e) => {
-    setWhoWhat(e.target.value);
+  const handleUserAppTitleChange = (e) => {
+    setUserAppTitle(e.target.value);
   };
 
   const handleCalendarIdChange = (e) => {
@@ -1172,7 +1172,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               <Card className="w-full max-w-[400px] mx-auto">
                 <CardHeader>
                   
-                  <CardTitle inputGradient={inputGradient}>{whoWhat}</CardTitle>
+                  <CardTitle inputGradient={inputGradient}>{UserAppTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {timeError && (
@@ -1495,8 +1495,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         "text-blue-400"
                       )}>font_download</span>
                       <Input
-                        value={whoWhat}
-                        onChange={handleWhoWhatChange}
+                        value={UserAppTitle}
+                        onChange={handleUserAppTitleChange}
                         placeholder="A Grande Day Out"
                         inputGradient={inputGradient}
                       />
