@@ -2,16 +2,32 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import logo from './assets/logo.svg';
 import { emojiBlast } from "emoji-blast";
-import RandomEnding from './components/randomEnding.jsx'; // Import the new RandomEnding component
-import Tooltip from './Tooltip.jsx'; // Import the new Tooltip component
+import RandomEnding from './components/Extra/RandomEnding.jsx'; // Import the RandomEnding component
+import Tooltip from './components/Tooltip.jsx'; // Import the Tooltip component
+import Divider from './components/Divider.jsx/'; // Import the Divider component
+import ColourDropdown from './components/ColourDropdown.jsx'; // Import the ColourDropdown component
+import { cn } from './utils/cn.jsx';
 
 // Version number for the app
 const VERSION = "v0.61";
 
-// Utility function for class names
-const cn = (...args) => clsx(...args);
+export const logClassNames = (...args) => {
+  const classNames = cn(...args);
+  console.log('Generated class names:', classNames);
+  return classNames;
+};
 
-
+const colorToGradientMap = {
+  yellow: 'grey-yellow',
+  purple: 'blue-purple',
+  cyan: 'green-cyan',
+  grey: 'dark-grey',
+  orange: 'red-orange',
+  pink: 'retro-pink',
+  teal: 'retro-teal',
+  gold: 'brown-gold',
+  white: 'white-grey',
+};
 
 
 // Fetch user's calendar list
@@ -149,7 +165,7 @@ const Input = ({ className, inputGradient, ...props }) => {
     'retro-pink': '0 0 10px rgba(255, 105, 180, 0.5), 0 0 20px rgba(148, 0, 211, 0.5)',
     'retro-teal': '0 0 10px rgba(0, 128, 128, 0.5), 0 0 20px rgba(64, 224, 208, 0.5)',
     'brown-gold': '0 0 10px rgba(139, 69, 19, 0.5), 0 0 20px rgba(255, 215, 0, 0.5)',
-    'beige-grey': '0 0 10px rgba(245, 245, 220, 0.5), 0 0 20px rgba(128, 128, 128, 0.5)',
+    'white-grey': '0 0 10px rgba(245, 245, 220, 0.5), 0 0 20px rgba(128, 128, 128, 0.5)',
   };
   const hoverGradientStyles = {
     'grey-yellow': '0 0 15px rgba(128, 128, 128, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
@@ -160,7 +176,7 @@ const Input = ({ className, inputGradient, ...props }) => {
     'retro-pink': '0 0 15px rgba(255, 105, 180, 0.7), 0 0 25px rgba(148, 0, 211, 0.7)',
     'retro-teal': '0 0 15px rgba(0, 128, 128, 0.7), 0 0 25px rgba(64, 224, 208, 0.7)',
     'brown-gold': '0 0 15px rgba(139, 69, 19, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
-    'beige-grey': '0 0 15px rgba(245, 245, 220, 0.7), 0 0 25px rgba(128, 128, 128, 0.7)',
+    'white-grey': '0 0 15px rgba(245, 245, 220, 0.7), 0 0 25px rgba(128, 128, 128, 0.7)',
   };
   return (
     <div className="relative w-full">
@@ -188,7 +204,7 @@ const Textarea = ({ className, inputGradient, ...props }) => {
     'retro-pink': '0 0 10px rgba(255, 105, 180, 0.5), 0 0 20px rgba(148, 0, 211, 0.5)',
     'retro-teal': '0 0 10px rgba(0, 128, 128, 0.5), 0 0 20px rgba(64, 224, 208, 0.5)',
     'brown-gold': '0 0 10px rgba(139, 69, 19, 0.5), 0 0 20px rgba(255, 215, 0, 0.5)',
-    'beige-grey': '0 0 10px rgba(245, 245, 220, 0.5), 0 0 20px rgba(128, 128, 128, 0.5)',
+    'white-grey': '0 0 10px rgba(245, 245, 220, 0.5), 0 0 20px rgba(128, 128, 128, 0.5)',
   };
   const hoverGradientStyles = {
     'grey-yellow': '0 0 15px rgba(128, 128, 128, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
@@ -199,7 +215,7 @@ const Textarea = ({ className, inputGradient, ...props }) => {
     'retro-pink': '0 0 15px rgba(255, 105, 180, 0.7), 0 0 25px rgba(148, 0, 211, 0.7)',
     'retro-teal': '0 0 15px rgba(0, 128, 128, 0.7), 0 0 25px rgba(64, 224, 208, 0.7)',
     'brown-gold': '0 0 15px rgba(139, 69, 19, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
-    'beige-grey': '0 0 15px rgba(245, 245, 220, 0.7), 0 0 25px rgba(128, 128, 128, 0.7)',
+    'white-grey': '0 0 15px rgba(245, 245, 220, 0.7), 0 0 25px rgba(128, 128, 128, 0.7)',
   };
   return (
     <div className="relative w-full">
@@ -228,7 +244,7 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
       buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
       buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
       buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+      buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
       "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
     gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
       buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
@@ -237,7 +253,7 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
       buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
       buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
       buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "beige-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+      buttonGradient === "white-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
       "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
     text: buttonGradient === "grey-yellow" ? "text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500" :
       buttonGradient === "green-cyan" ? "text-green-400 hover:text-green-300 focus:ring-green-500" :
@@ -246,7 +262,7 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
       buttonGradient === "retro-pink" ? "text-pink-400 hover:text-pink-300 focus:ring-pink-500" :
       buttonGradient === "retro-teal" ? "text-teal-400 hover:text-teal-300 focus:ring-teal-500" :
       buttonGradient === "brown-gold" ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500" :
-      buttonGradient === "beige-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
+      buttonGradient === "white-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
       "text-blue-400 hover:text-blue-300 focus:ring-blue-500",
     share: buttonGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
       buttonGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
@@ -255,7 +271,7 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
       buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
       buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
       buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+      buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
       "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
   };
   return (
@@ -266,30 +282,6 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
   );
 };
 
-
-const Divider = ({ inputGradient }) => (
-  <hr
-    className={cn(
-      "border-0 h-px w-full my-4",
-      inputGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600" :
-      inputGradient === "blue-purple" ? "bg-gradient-to-r from-blue-600 to-purple-600" :
-      inputGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600" :
-      inputGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800" :
-      inputGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600" :
-      inputGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600" :
-      inputGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600" :
-      inputGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600" :
-      inputGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500" :
-      "bg-gradient-to-r from-blue-600 to-purple-600"
-    )}
-    style={{
-      boxShadow: inputGradient === "grey-yellow" ? "0 0 10px rgba(255, 215, 0, 0.5)" :
-        inputGradient === "blue-purple" ? "0 0 10px rgba(139, 92, 246, 0.5)" :
-        inputGradient === "dark-grey" ? "0 0 10px rgba(100, 100, 100, 0.5)" : "0 0 10px rgba(139, 92, 246, 0.5)"
-    }}
-  />
-);
-
 const Card = ({ className, ...props }) => (
   <div
     className={cn(
@@ -299,6 +291,8 @@ const Card = ({ className, ...props }) => (
     {...props}
   />
 );
+
+
 const CardHeader = ({ className, ...props }) => (
   <div className={cn("p-2 sm:p-2 text-center", className)} {...props} />
 );
@@ -312,7 +306,7 @@ const CardTitle = ({ className, inputGradient, ...props }) => {
     'retro-pink': 'bg-gradient-to-r from-pink-400 to-purple-600 bg-clip-text text-transparent',
     'retro-teal': 'bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent',
     'brown-gold': 'bg-gradient-to-r from-amber-900 to-yellow-500 bg-clip-text text-transparent',
-    'beige-grey': 'bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent',
+    'white-grey': 'bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent',
   };
   return (
     <h3
@@ -348,7 +342,7 @@ const Alert = ({ className, variant = "default", inputGradient, onDismiss, ...pr
                                  inputGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white" :
                                  inputGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white" :
                                  inputGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white" :
-                                 inputGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black" :
+                                 inputGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black" :
                                  "bg-gradient-to-r from-blue-600 to-purple-600 text-white") : variants[variant],
         className
       )}
@@ -387,7 +381,7 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
       buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
       buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
       buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+      buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
       "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
     gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
       buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
@@ -396,7 +390,7 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
       buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
       buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
       buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "beige-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+      buttonGradient === "white-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
       "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
   };
   const hoverStyles = {
@@ -407,7 +401,7 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
       buttonGradient === "retro-pink" ? "from-pink-600 to-purple-700" :
       buttonGradient === "retro-teal" ? "from-teal-600 to-cyan-700" :
       buttonGradient === "brown-gold" ? "from-amber-800 to-yellow-700" :
-      buttonGradient === "beige-grey" ? "from-gray-400 to-gray-600" :
+      buttonGradient === "white-grey" ? "from-gray-400 to-gray-600" :
       "from-blue-700 to-purple-700",
     gradientReverse: buttonGradient === "grey-yellow" ? "from-gray-600 to-yellow-700" :
       buttonGradient === "green-cyan" ? "from-green-600 to-cyan-700" :
@@ -416,7 +410,7 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
       buttonGradient === "retro-pink" ? "from-pink-600 to-purple-700" :
       buttonGradient === "retro-teal" ? "from-teal-600 to-cyan-700" :
       buttonGradient === "brown-gold" ? "from-amber-800 to-yellow-700" :
-      buttonGradient === "beige-grey" ? "from-gray-400 to-gray-600" :
+      buttonGradient === "white-grey" ? "from-gray-400 to-gray-600" :
       "from-blue-700 to-purple-700",
   };
   return (
@@ -448,7 +442,7 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
 //       buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
 //       buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
 //       buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-//       buttonGradient === "beige-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+//       buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
 //       "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
 //     gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
 //       buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
@@ -457,7 +451,7 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
 //       buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
 //       buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
 //       buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-//       buttonGradient === "beige-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
+//       buttonGradient === "white-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
 //       "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
 //   };
 //   return (
@@ -1244,7 +1238,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       inputGradient === "retro-pink" ? "text-pink-400" :
                       inputGradient === "retro-teal" ? "text-teal-400" :
                       inputGradient === "brown-gold" ? "text-amber-400" :
-                      inputGradient === "beige-grey" ? "text-gray-600" :
+                      inputGradient === "white-grey" ? "text-gray-600" :
                       "text-blue-400"
                     )}>public</span>
                     </Tooltip>
@@ -1274,7 +1268,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "retro-pink" ? "text-pink-400" : 
                           inputGradient === "retro-teal" ? "text-teal-400" : 
                           inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "beige-grey" ? "text-gray-600" : 
+                          inputGradient === "white-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>event</span>
                         </Tooltip>
@@ -1303,7 +1297,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "retro-pink" ? "text-pink-400" : 
                           inputGradient === "retro-teal" ? "text-teal-400" : 
                           inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "beige-grey" ? "text-gray-600" : 
+                          inputGradient === "white-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>access_time</span>
                         </Tooltip>
@@ -1332,7 +1326,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>hourglass_empty</span>
                       </Tooltip>
@@ -1368,7 +1362,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>event_available</span>
                       </Tooltip>
@@ -1398,7 +1392,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>account_balance_wallet</span>
                       </Tooltip>
@@ -1441,7 +1435,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>edit</span>
                       </Tooltip>
@@ -1521,7 +1515,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>font_download</span>
                       <Input
@@ -1542,7 +1536,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>calendar_today</span>
                       {calendarId ? (
@@ -1559,7 +1553,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                               inputGradient === "retro-pink" ? "text-pink-400 hover:text-pink-300 focus:ring-pink-500" :
                               inputGradient === "retro-teal" ? "text-teal-400 hover:text-teal-300 focus:ring-teal-500" :
                               inputGradient === "brown-gold" ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500" :
-                              inputGradient === "beige-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
+                              inputGradient === "white-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
                               "text-blue-400 hover:text-blue-300 focus:ring-blue-500"
                             )}
                             onClick={() => setShowCalendarList(true)}
@@ -1578,7 +1572,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                               inputGradient === "retro-pink" ? "text-pink-400 hover:text-pink-300 focus:ring-pink-500" :
                               inputGradient === "retro-teal" ? "text-teal-400 hover:text-teal-300 focus:ring-teal-500" :
                               inputGradient === "brown-gold" ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500" :
-                              inputGradient === "beige-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
+                              inputGradient === "white-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
                               "text-blue-400 hover:text-blue-300 focus:ring-blue-500"
                             )}
                             onClick={() => setShowCustomCalendarInput(true)}
@@ -1627,7 +1621,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "retro-pink" ? "text-pink-400" : 
                           inputGradient === "retro-teal" ? "text-teal-400" : 
                           inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "beige-grey" ? "text-gray-600" : 
+                          inputGradient === "white-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>calendar_today</span>
                         <div className="w-full flex items-center gap-2">
@@ -1661,7 +1655,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "retro-pink" ? "text-pink-400" : 
                           inputGradient === "retro-teal" ? "text-teal-400" : 
                           inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "beige-grey" ? "text-gray-600" : 
+                          inputGradient === "white-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>calendar_today</span>
                         <select
@@ -1689,7 +1683,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>share</span>
                       <div className="w-full flex flex-col sm:flex-row items-center gap-2">
@@ -1723,7 +1717,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "retro-pink" ? "text-pink-400" : 
                           inputGradient === "retro-teal" ? "text-teal-400" : 
                           inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "beige-grey" ? "text-gray-600" : 
+                          inputGradient === "white-grey" ? "text-gray-600" : 
                           "text-blue-400"
                         )}>person</span>
                         <p className={cn(
@@ -1735,7 +1729,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === "retro-pink" ? "text-pink-400" :
                           inputGradient === "retro-teal" ? "text-teal-400" :
                           inputGradient === "brown-gold" ? "text-amber-400" :
-                          inputGradient === "beige-grey" ? "text-gray-600" :
+                          inputGradient === "white-grey" ? "text-gray-600" :
                           "text-blue-400"
                         )}>
                           <span className="font-bold">Shared with:</span> {sharedUsers.join(', ')}
@@ -1765,6 +1759,10 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
 
                   <Divider inputGradient={inputGradient} />
 
+                  <Divider inputGradient={inputGradient} label="App colour" />
+
+                  <Divider inputGradient={inputGradient} icon="star" />
+
 
                     <div className="flex items-center">
                       <span className={cn(
@@ -1777,7 +1775,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>account_balance_wallet</span>
                       <div className="relative w-full">
@@ -1806,7 +1804,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>currency_exchange</span>
                       <div className="relative w-full">
@@ -1836,7 +1834,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>palette</span>
                       <select
@@ -1852,7 +1850,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <option value="retro-pink">Retro Pink Glow</option>
                         <option value="retro-teal">Retro Teal Glow</option>
                         <option value="brown-gold">Brown/Gold Glow</option>
-                        <option value="beige-grey">Beige/Grey Glow</option>
+                        <option value="white-grey">white/Grey Glow</option>
                       </select>
                     </div>
                     <div className="flex items-center">
@@ -1866,7 +1864,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>radio_button_checked</span>
                       <select
@@ -1882,7 +1880,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <option value="retro-pink">Retro Pink Glow</option>
                         <option value="retro-teal">Retro Teal Glow</option>
                         <option value="brown-gold">Brown/Gold Glow</option>
-                        <option value="beige-grey">Beige/Grey Glow</option>
+                        <option value="white-grey">white/Grey Glow</option>
                       </select>
                     </div>
                     <div className="flex items-center">
@@ -1896,7 +1894,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>settings</span>
                       <Button
@@ -1922,7 +1920,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient === "retro-pink" ? "text-pink-400" : 
                         inputGradient === "retro-teal" ? "text-teal-400" : 
                         inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "beige-grey" ? "text-gray-600" : 
+                        inputGradient === "white-grey" ? "text-gray-600" : 
                         "text-blue-400"
                       )}>code</span>
                       <label className="flex items-center">

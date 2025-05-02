@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
-
-// Utility function for class names (consistent with App.jsx)
-const cn = (...args) => clsx(...args);
+import { cn } from '../utils/cn.jsx';
 
 export default function Tooltip({ message, children, position = 'top', autoFadeDuration = 3000 }) {
   const [isVisible, setIsVisible] = useState(false);

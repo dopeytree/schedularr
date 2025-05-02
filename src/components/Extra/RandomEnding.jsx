@@ -1,5 +1,5 @@
-// Place this file at: src/components/randomEnding.jsx
-import { useState, useEffect, useRef } from 'react';
+// Place this file at: src/components/Extra/RandomEnding.jsx
+import { useState, useEffect, } from 'react';
 
 // Short endings (taglines with emojis)
 const endings = [
