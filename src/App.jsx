@@ -2,33 +2,15 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import logo from './assets/logo.svg';
 import { emojiBlast } from "emoji-blast";
-import RandomEnding from './components/Extra/RandomEnding.jsx'; // Import the RandomEnding component
-import Tooltip from './components/Tooltip.jsx'; // Import the Tooltip component
-import Divider from './components/Divider.jsx/'; // Import the Divider component
-import ColourDropdown from './components/ColourDropdown.jsx'; // Import the ColourDropdown component
+import RandomEnding from './components/Extra/RandomEnding.jsx';
+import Tooltip from './components/Tooltip.jsx';
+import Divider from './components/Divider.jsx';
+import ColourDropdown from './components/ColourDropdown.jsx';
+import { getGradientClass, getTextGradientClass, getShadowGradientStyle } from './components/GradientColours.jsx';
 import { cn } from './utils/cn.jsx';
 
 // Version number for the app
 const VERSION = "v0.61";
-
-export const logClassNames = (...args) => {
-  const classNames = cn(...args);
-  console.log('Generated class names:', classNames);
-  return classNames;
-};
-
-const colorToGradientMap = {
-  yellow: 'grey-yellow',
-  purple: 'blue-purple',
-  cyan: 'green-cyan',
-  grey: 'dark-grey',
-  orange: 'red-orange',
-  pink: 'retro-pink',
-  teal: 'retro-teal',
-  gold: 'brown-gold',
-  white: 'white-grey',
-};
-
 
 // Fetch user's calendar list
 const fetchCalendarList = async (accessToken) => {
@@ -68,22 +50,15 @@ const findSchedularrCalendar = async (accessToken, calendarName = 'Schedularr') 
 // Create new calendar with unique name
 const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', attempt = 0) => {
   try {
-    // Check if calendar with the name already exists
     const existingId = await findSchedularrCalendar(accessToken, calendarName);
     if (existingId) {
-      return existingId; // Return existing calendar ID if found
+      return existingId;
     }
-
-    // Generate unique name if attempt > 0
     const uniqueName = attempt > 0 ? `${calendarName} ${attempt}` : calendarName;
-
-    // Check if the unique name already exists
     const existingUniqueId = await findSchedularrCalendar(accessToken, uniqueName);
     if (existingUniqueId) {
-      // If the name exists, try again with the next number
       return createSchedularrCalendar(accessToken, calendarName, attempt + 1);
     }
-
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
       method: 'POST',
       headers: {
@@ -118,7 +93,7 @@ const shareSchedularrCalendar = async (calendarId, email, accessToken) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        role: 'writer', // Grants "Make changes to events" permission
+        role: 'writer',
         scope: { type: 'user', value: email },
       }),
     });
@@ -147,7 +122,7 @@ const fetchSharedUsers = async (calendarId, accessToken) => {
     return data.items
       .filter(item => item.scope.type === 'user' && item.scope.value)
       .map(item => item.scope.value)
-      .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@')); // Filter out calendar IDs and non-email-like entries
+      .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@'));
   } catch (err) {
     console.error('Fetch shared users error:', err);
     return [];
@@ -156,28 +131,6 @@ const fetchSharedUsers = async (calendarId, accessToken) => {
 
 // Shadcn UI Components with hover animations
 const Input = ({ className, inputGradient, ...props }) => {
-  const gradientStyles = {
-    'grey-yellow': '0 0 10px rgba(128, 128, 128, 0.5), 0 0 20px rgba(255, 215, 0, 0.5)',
-    'blue-purple': '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.5)',
-    'green-cyan': '0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(6, 182, 212, 0.5)',
-    'dark-grey': '0 0 10px rgba(50, 50, 50, 0.5), 0 0 20px rgba(100, 100, 100, 0.5)',
-    'red-orange': '0 0 10px rgba(255, 69, 0, 0.5), 0 0 20px rgba(255, 99, 71, 0.5)',
-    'retro-pink': '0 0 10px rgba(255, 105, 180, 0.5), 0 0 20px rgba(148, 0, 211, 0.5)',
-    'retro-teal': '0 0 10px rgba(0, 128, 128, 0.5), 0 0 20px rgba(64, 224, 208, 0.5)',
-    'brown-gold': '0 0 10px rgba(139, 69, 19, 0.5), 0 0 20px rgba(255, 215, 0, 0.5)',
-    'white-grey': '0 0 10px rgba(245, 245, 220, 0.5), 0 0 20px rgba(128, 128, 128, 0.5)',
-  };
-  const hoverGradientStyles = {
-    'grey-yellow': '0 0 15px rgba(128, 128, 128, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
-    'blue-purple': '0 0 15px rgba(59, 130, 246, 0.7), 0 0 25px rgba(139, 92, 246, 0.7)',
-    'green-cyan': '0 0 15px rgba(34, 197, 94, 0.7), 0 0 25px rgba(6, 182, 212, 0.7)',
-    'dark-grey': '0 0 15px rgba(50, 50, 50, 0.7), 0 0 25px rgba(100, 100, 100, 0.7)',
-    'red-orange': '0 0 15px rgba(255, 69, 0, 0.7), 0 0 25px rgba(255, 99, 71, 0.7)',
-    'retro-pink': '0 0 15px rgba(255, 105, 180, 0.7), 0 0 25px rgba(148, 0, 211, 0.7)',
-    'retro-teal': '0 0 15px rgba(0, 128, 128, 0.7), 0 0 25px rgba(64, 224, 208, 0.7)',
-    'brown-gold': '0 0 15px rgba(139, 69, 19, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
-    'white-grey': '0 0 15px rgba(245, 245, 220, 0.7), 0 0 25px rgba(128, 128, 128, 0.7)',
-  };
   return (
     <div className="relative w-full">
       <input
@@ -185,9 +138,9 @@ const Input = ({ className, inputGradient, ...props }) => {
           "flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105",
           className
         )}
-        style={{ boxShadow: gradientStyles[inputGradient] || gradientStyles['blue-purple'] }}
-        onMouseEnter={(e) => e.target.style.boxShadow = hoverGradientStyles[inputGradient] || hoverGradientStyles['blue-purple']}
-        onMouseLeave={(e) => e.target.style.boxShadow = gradientStyles[inputGradient] || gradientStyles['blue-purple']}
+        style={{ boxShadow: getShadowGradientStyle(inputGradient) }}
+        onMouseEnter={(e) => e.target.style.boxShadow = getShadowGradientStyle(inputGradient, true)}
+        onMouseLeave={(e) => e.target.style.boxShadow = getShadowGradientStyle(inputGradient)}
         {...props}
       />
     </div>
@@ -195,28 +148,6 @@ const Input = ({ className, inputGradient, ...props }) => {
 };
 
 const Textarea = ({ className, inputGradient, ...props }) => {
-  const gradientStyles = {
-    'grey-yellow': '0 0 10px rgba(128, 128, 128, 0.5), 0 0 20px rgba(255, 215, 0, 0.5)',
-    'blue-purple': '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.5)',
-    'green-cyan': '0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(6, 182, 212, 0.5)',
-    'dark-grey': '0 0 10px rgba(50, 50, 50, 0.5), 0 0 20px rgba(100, 100, 100, 0.5)',
-    'red-orange': '0 0 10px rgba(255, 69, 0, 0.5), 0 0 20px rgba(255, 99, 71, 0.5)',
-    'retro-pink': '0 0 10px rgba(255, 105, 180, 0.5), 0 0 20px rgba(148, 0, 211, 0.5)',
-    'retro-teal': '0 0 10px rgba(0, 128, 128, 0.5), 0 0 20px rgba(64, 224, 208, 0.5)',
-    'brown-gold': '0 0 10px rgba(139, 69, 19, 0.5), 0 0 20px rgba(255, 215, 0, 0.5)',
-    'white-grey': '0 0 10px rgba(245, 245, 220, 0.5), 0 0 20px rgba(128, 128, 128, 0.5)',
-  };
-  const hoverGradientStyles = {
-    'grey-yellow': '0 0 15px rgba(128, 128, 128, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
-    'blue-purple': '0 0 15px rgba(59, 130, 246, 0.7), 0 0 25px rgba(139, 92, 246, 0.7)',
-    'green-cyan': '0 0 15px rgba(34, 197, 94, 0.7), 0 0 25px rgba(6, 182, 212, 0.7)',
-    'dark-grey': '0 0 15px rgba(50, 50, 50, 0.7), 0 0 25px rgba(100, 100, 100, 0.7)',
-    'red-orange': '0 0 15px rgba(255, 69, 0, 0.7), 0 0 25px rgba(255, 99, 71, 0.7)',
-    'retro-pink': '0 0 15px rgba(255, 105, 180, 0.7), 0 0 25px rgba(148, 0, 211, 0.7)',
-    'retro-teal': '0 0 15px rgba(0, 128, 128, 0.7), 0 0 25px rgba(64, 224, 208, 0.7)',
-    'brown-gold': '0 0 15px rgba(139, 69, 19, 0.7), 0 0 25px rgba(255, 215, 0, 0.7)',
-    'white-grey': '0 0 15px rgba(245, 245, 220, 0.7), 0 0 25px rgba(128, 128, 128, 0.7)',
-  };
   return (
     <div className="relative w-full">
       <textarea
@@ -224,9 +155,9 @@ const Textarea = ({ className, inputGradient, ...props }) => {
           "flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105",
           className
         )}
-        style={{ boxShadow: gradientStyles[inputGradient] || gradientStyles['blue-purple'], resize: 'none' }}
-        onMouseEnter={(e) => e.target.style.boxShadow = hoverGradientStyles[inputGradient] || hoverGradientStyles['blue-purple']}
-        onMouseLeave={(e) => e.target.style.boxShadow = gradientStyles[inputGradient] || gradientStyles['blue-purple']}
+        style={{ boxShadow: getShadowGradientStyle(inputGradient), resize: 'none' }}
+        onMouseEnter={(e) => e.target.style.boxShadow = getShadowGradientStyle(inputGradient, true)}
+        onMouseLeave={(e) => e.target.style.boxShadow = getShadowGradientStyle(inputGradient)}
         {...props}
       />
     </div>
@@ -237,42 +168,10 @@ const Button = ({ className, variant = "default", buttonGradient, ...props }) =>
   const baseStyles = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900";
   const variants = {
     default: "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500",
-    gradient: buttonGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-      buttonGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-      buttonGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-      buttonGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-      buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-      buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-      buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-      "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
-    gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-      buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-      buttonGradient === "dark-grey" ? "bg-gradient-to-l from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-      buttonGradient === "red-orange" ? "bg-gradient-to-l from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-      buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-      buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-      buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "white-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-      "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
-    text: buttonGradient === "grey-yellow" ? "text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500" :
-      buttonGradient === "green-cyan" ? "text-green-400 hover:text-green-300 focus:ring-green-500" :
-      buttonGradient === "dark-grey" ? "text-gray-400 hover:text-gray-300 focus:ring-gray-500" :
-      buttonGradient === "red-orange" ? "text-red-400 hover:text-red-300 focus:ring-red-500" :
-      buttonGradient === "retro-pink" ? "text-pink-400 hover:text-pink-300 focus:ring-pink-500" :
-      buttonGradient === "retro-teal" ? "text-teal-400 hover:text-teal-300 focus:ring-teal-500" :
-      buttonGradient === "brown-gold" ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500" :
-      buttonGradient === "white-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
-      "text-blue-400 hover:text-blue-300 focus:ring-blue-500",
-    share: buttonGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-      buttonGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-      buttonGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-      buttonGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-      buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-      buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-      buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-      "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
+    gradient: getGradientClass(buttonGradient) + " text-white focus:ring-blue-500 transform hover:scale-105",
+    gradientReverse: getGradientClass(buttonGradient, 'to-l') + " text-white focus:ring-blue-500 transform hover:scale-105",
+    text: `text-${buttonGradient}-400 hover:text-${buttonGradient}-300 focus:ring-${buttonGradient}-500`,
+    share: getGradientClass(buttonGradient) + " text-white focus:ring-blue-500 transform hover:scale-105",
   };
   return (
     <button
@@ -292,33 +191,23 @@ const Card = ({ className, ...props }) => (
   />
 );
 
-
 const CardHeader = ({ className, ...props }) => (
   <div className={cn("p-2 sm:p-2 text-center", className)} {...props} />
 );
+
 const CardTitle = ({ className, inputGradient, ...props }) => {
-  const gradientStyles = {
-    'grey-yellow': 'bg-gradient-to-r from-gray-300 to-yellow-500 bg-clip-text text-transparent',
-    'blue-purple': 'bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent',
-    'green-cyan': 'bg-gradient-to-r from-green-400 to-cyan-500 bg-clip-text text-transparent',
-    'dark-grey': 'bg-gradient-to-r from-gray-500 to-gray-700 bg-clip-text text-transparent',
-    'red-orange': 'bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent',
-    'retro-pink': 'bg-gradient-to-r from-pink-400 to-purple-600 bg-clip-text text-transparent',
-    'retro-teal': 'bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent',
-    'brown-gold': 'bg-gradient-to-r from-amber-900 to-yellow-500 bg-clip-text text-transparent',
-    'white-grey': 'bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent',
-  };
   return (
     <h3
       className={cn(
         "text-2xl font-semibold mb-1",
-        gradientStyles[inputGradient] || gradientStyles['blue-purple'],
+        getTextGradientClass(inputGradient),
         className
       )}
       {...props}
     />
   );
 };
+
 const CardContent = ({ className, ...props }) => (
   <div className={cn("p-6 sm:p-8 pt-0", className)} {...props} />
 );
@@ -328,22 +217,14 @@ const Alert = ({ className, variant = "default", inputGradient, onDismiss, ...pr
   const variants = {
     default: "bg-gray-700/80 text-gray-300 border-gray-600",
     destructive: "bg-red-900/50 text-red-400 border-red-600 animate-pulse",
-    success: "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent animate-bounce",
+    success: getGradientClass(inputGradient) + " text-white border-transparent animate-bounce",
   };
   return (
     <div
       role="alert"
       className={cn(
         baseStyles,
-        variant === "success" ? (inputGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black" :
-                                 inputGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white" :
-                                 inputGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800 text-white" :
-                                 inputGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600 text-white" :
-                                 inputGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white" :
-                                 inputGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white" :
-                                 inputGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white" :
-                                 inputGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black" :
-                                 "bg-gradient-to-r from-blue-600 to-purple-600 text-white") : variants[variant],
+        variants[variant],
         className
       )}
       onClick={onDismiss}
@@ -361,6 +242,7 @@ const Tabs = ({ value, onValueChange, children }) => {
     </div>
   );
 };
+
 const TabsList = ({ className, ...props }) => (
   <div
     className={cn(
@@ -374,44 +256,8 @@ const TabsList = ({ className, ...props }) => (
 const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gradient", buttonGradient, ...props }) => {
   const baseStyles = "flex-1 py-3 px-6 text-lg font-semibold flex items-center justify-center transition-all duration-300";
   const variants = {
-    gradient: buttonGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-      buttonGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-      buttonGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-      buttonGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-      buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-      buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-      buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-      "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
-    gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-      buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-      buttonGradient === "dark-grey" ? "bg-gradient-to-l from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-      buttonGradient === "red-orange" ? "bg-gradient-to-l from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-      buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-      buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-      buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-      buttonGradient === "white-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-      "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
-  };
-  const hoverStyles = {
-    gradient: buttonGradient === "grey-yellow" ? "from-gray-600 to-yellow-700" :
-      buttonGradient === "green-cyan" ? "from-green-600 to-cyan-700" :
-      buttonGradient === "dark-grey" ? "from-gray-800 to-gray-900" :
-      buttonGradient === "red-orange" ? "from-red-600 to-orange-700" :
-      buttonGradient === "retro-pink" ? "from-pink-600 to-purple-700" :
-      buttonGradient === "retro-teal" ? "from-teal-600 to-cyan-700" :
-      buttonGradient === "brown-gold" ? "from-amber-800 to-yellow-700" :
-      buttonGradient === "white-grey" ? "from-gray-400 to-gray-600" :
-      "from-blue-700 to-purple-700",
-    gradientReverse: buttonGradient === "grey-yellow" ? "from-gray-600 to-yellow-700" :
-      buttonGradient === "green-cyan" ? "from-green-600 to-cyan-700" :
-      buttonGradient === "dark-grey" ? "from-gray-800 to-gray-900" :
-      buttonGradient === "red-orange" ? "from-red-600 to-orange-700" :
-      buttonGradient === "retro-pink" ? "from-pink-600 to-purple-700" :
-      buttonGradient === "retro-teal" ? "from-teal-600 to-cyan-700" :
-      buttonGradient === "brown-gold" ? "from-amber-800 to-yellow-700" :
-      buttonGradient === "white-grey" ? "from-gray-400 to-gray-600" :
-      "from-blue-700 to-purple-700",
+    gradient: getGradientClass(buttonGradient) + " text-white focus:ring-blue-500 transform hover:scale-105",
+    gradientReverse: getGradientClass(buttonGradient, 'to-l') + " text-white focus:ring-blue-500 transform hover:scale-105",
   };
   return (
     <button
@@ -419,8 +265,8 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
         baseStyles,
         variants[variant],
         value === tabValue ? cn(
-          variant === "gradient" ? `bg-gradient-to-r ${hoverStyles.gradient}` :
-          variant === "gradientReverse" ? `bg-gradient-to-l ${hoverStyles.gradientReverse}` : "",
+          variant === "gradient" ? getGradientClass(buttonGradient) :
+          variant === "gradientReverse" ? getGradientClass(buttonGradient, 'to-l') : "",
           "text-cyan-300"
         ) : "",
         className
@@ -430,43 +276,6 @@ const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gra
     />
   );
 };
-
-
-// const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gradient", buttonGradient, ...props }) => {
-//   const baseStyles = "flex-1 py-3 px-6 text-lg font-semibold flex items-center justify-center transition-all duration-300";
-//   const variants = {
-//     gradient: buttonGradient === "grey-yellow" ? "bg-gradient-to-r from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-//       buttonGradient === "green-cyan" ? "bg-gradient-to-r from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-//       buttonGradient === "dark-grey" ? "bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-//       buttonGradient === "red-orange" ? "bg-gradient-to-r from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-//       buttonGradient === "retro-pink" ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-//       buttonGradient === "retro-teal" ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-//       buttonGradient === "brown-gold" ? "bg-gradient-to-r from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-//       buttonGradient === "white-grey" ? "bg-gradient-to-r from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-//       "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
-//     gradientReverse: buttonGradient === "grey-yellow" ? "bg-gradient-to-l from-gray-500 to-yellow-600 text-black hover:from-gray-600 hover:to-yellow-700 focus:ring-yellow-500 transform hover:scale-105" :
-//       buttonGradient === "green-cyan" ? "bg-gradient-to-l from-green-500 to-cyan-600 text-white hover:from-green-600 hover:to-cyan-700 focus:ring-green-500 transform hover:scale-105" :
-//       buttonGradient === "dark-grey" ? "bg-gradient-to-l from-gray-700 to-gray-800 text-white hover:from-gray-800 hover:to-gray-900 focus:ring-gray-500 transform hover:scale-105" :
-//       buttonGradient === "red-orange" ? "bg-gradient-to-l from-red-500 to-orange-600 text-white hover:from-red-600 hover:to-orange-700 focus:ring-red-500 transform hover:scale-105" :
-//       buttonGradient === "retro-pink" ? "bg-gradient-to-l from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 focus:ring-pink-500 transform hover:scale-105" :
-//       buttonGradient === "retro-teal" ? "bg-gradient-to-l from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 focus:ring-teal-500 transform hover:scale-105" :
-//       buttonGradient === "brown-gold" ? "bg-gradient-to-l from-amber-900 to-yellow-600 text-white hover:from-amber-800 hover:to-yellow-700 focus:ring-amber-500 transform hover:scale-105" :
-//       buttonGradient === "white-grey" ? "bg-gradient-to-l from-gray-300 to-gray-500 text-black hover:from-gray-400 hover:to-gray-600 focus:ring-gray-400 transform hover:scale-105" :
-//       "bg-gradient-to-l from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 transform hover:scale-105",
-//   };
-//   return (
-//     <button
-//       className={cn(
-//         baseStyles,
-//         variants[variant],
-//         value === tabValue ? "bg-indigo-800 text-cyan-300" : "",
-//         className
-//       )}
-//       onClick={() => onValueChange(tabValue)}
-//       {...props}
-//     />
-//   );
-// };
 
 const TabsContent = ({ value, tabValue, className, ...props }) => (
   <div
@@ -479,7 +288,6 @@ const TabsContent = ({ value, tabValue, className, ...props }) => (
 );
 
 const App = () => {
-  // Hardcoded OAuth Client ID
   const CLIENT_ID = '32569943087-v0hk6vf7krtq1b2v5e1okhp0v5jqeih1.apps.googleusercontent.com';
 
   const [event, setEvent] = useState({
@@ -497,8 +305,8 @@ const App = () => {
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem('currency') || '£';
   });
-  const [UserAppTitle, setUserAppTitle] = useState(() => {
-    return localStorage.getItem('UserAppTitle') || 'A Grande Day Out';
+  const [appTitle, setAppTitle] = useState(() => {
+    return localStorage.getItem('appTitle') || 'A Grande Day Out';
   });
   const [calendarId, setCalendarId] = useState(() => {
     return localStorage.getItem('calendarId') || '';
@@ -513,10 +321,10 @@ const App = () => {
   const [sharedUsers, setSharedUsers] = useState([]);
   const [shareEmail, setShareEmail] = useState('');
   const [inputGradient, setInputGradient] = useState(() => {
-    return localStorage.getItem('inputGradient') || 'blue-purple';
+    return localStorage.getItem('inputGradient') || 'purple';
   });
   const [buttonGradient, setButtonGradient] = useState(() => {
-    return localStorage.getItem('buttonGradient') || 'dark-grey';
+    return localStorage.getItem('buttonGradient') || 'grey';
   });
   const [isAnimating, setIsAnimating] = useState(true);
   const [cost, setCost] = useState(0);
@@ -547,7 +355,6 @@ const App = () => {
   });
   const [showGuide, setShowGuide] = useState(false);
 
-  // Persist state
   useEffect(() => {
     localStorage.setItem('isSignedIn', isSignedIn);
     localStorage.setItem('userEmail', userEmail);
@@ -555,15 +362,14 @@ const App = () => {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('hourlyRate', hourlyRate);
     localStorage.setItem('currency', currency);
-    localStorage.setItem('UserAppTitle', UserAppTitle);
+    localStorage.setItem('appTitle', appTitle);
     localStorage.setItem('calendarId', calendarId);
     localStorage.setItem('calendarName', calendarName);
     localStorage.setItem('inputGradient', inputGradient);
     localStorage.setItem('buttonGradient', buttonGradient);
     localStorage.setItem('devMode', devMode);
-  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, UserAppTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode]);
+  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode]);
 
-  // Fetch calendar list when signed in
   useEffect(() => {
     if (isSignedIn && accessToken) {
       fetchCalendarList(accessToken).then(calendars => {
@@ -572,7 +378,6 @@ const App = () => {
     }
   }, [isSignedIn, accessToken]);
 
-  // Fetch shared users when calendarId changes
   useEffect(() => {
     if (calendarId && accessToken) {
       fetchSharedUsers(calendarId, accessToken).then(users => {
@@ -583,7 +388,6 @@ const App = () => {
     }
   }, [calendarId, accessToken]);
 
-  // Rocket animation (looping until login, original code)
   useEffect(() => {
     let intervalId;
     if (!isSignedIn && isAnimating) {
@@ -651,31 +455,23 @@ const App = () => {
         clouds();
         setTimeout(sparkles, 400);
       };
-
-      // Run animation immediately and then every 2 seconds
       animate();
       intervalId = setInterval(animate, 2000);
     }
-
-    // Clean up interval when user logs in or component unmounts
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
-      }     
+      }
     };
   }, [isSignedIn, isAnimating]);
 
-  // Handle Google sign-in with implicit flow (popup)
   const handleSignIn = () => {
-    // Stop rocket animation
     setIsAnimating(false);
-
     if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
       setSubmissionError('Google Identity Services not loaded. Please check your network and try again.');
       console.error('Google Identity Services script not loaded.');
       return;
     }
-
     const tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
@@ -688,7 +484,6 @@ const App = () => {
         console.log('Access token received:', response.access_token);
         setAccessToken(response.access_token);
         setIsSignedIn(true);
-
         fetch('https://www.googleapis.com/userinfo/v2/me', {
           headers: { Authorization: `Bearer ${response.access_token}` },
         })
@@ -704,23 +499,20 @@ const App = () => {
             console.log('User signed in:', data.email, 'Name:', data.name);
           })
           .catch(err => {
-            setSubmissionError(`Failed to fetch userorul info: ${err.message}`);
+            setSubmissionError(`Failed to fetch user info: ${err.message}`);
             console.error('User info error:', err);
           });
       },
     });
-
     tokenClient.requestAccessToken();
   };
 
-  // Handle skip login
   const handleSkipLogin = () => {
     setIsSignedIn(true);
     setDevMode(true);
     setIsAnimating(false);
   };
 
-  // Handle logout
   const handleLogout = () => {
     if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
       window.google.accounts.oauth2.revoke(accessToken, () => {
@@ -739,11 +531,10 @@ const App = () => {
     setShareError('');
     setShareSuccess('');
     setShowCalendar(false);
-    setIsAnimating(true); // Restart animation on logout
+    setIsAnimating(true);
     setSharedUsers([]);
   };
 
-  // Automatically find or create Schedularr calendar after sign-in
   useEffect(() => {
     if (isSignedIn && !calendarId && !devMode && accessToken) {
       createSchedularrCalendar(accessToken, calendarName)
@@ -756,8 +547,7 @@ const App = () => {
         .catch(err => setSubmissionError(err.message));
     }
   }, [isSignedIn, calendarId, devMode, accessToken, calendarName]);
-  
-  // Validation functions
+
   const validateTime = (time) => {
     if (!time) return false;
     const minutes = parseInt(time.split(':')[1], 10);
@@ -775,7 +565,6 @@ const App = () => {
     return regex.test(email);
   };
 
-  // Input handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setEvent({ ...event, [name]: value });
@@ -793,8 +582,8 @@ const App = () => {
     setCurrency(e.target.value);
   };
 
-  const handleUserAppTitleChange = (e) => {
-    setUserAppTitle(e.target.value);
+  const handleAppTitleChange = (e) => {
+    setAppTitle(e.target.value);
   };
 
   const handleCalendarIdChange = (e) => {
@@ -854,15 +643,14 @@ const App = () => {
   };
 
   const handleDefaultColors = () => {
-    setInputGradient('brown-gold');
-    setButtonGradient('dark-grey');
+    setInputGradient('gold');
+    setButtonGradient('grey');
   };
 
   const handleDevModeChange = (e) => {
     setDevMode(e.target.checked);
   };
 
-  // Handle calendar sharing
   const handleShareCalendar = async () => {
     if (!validateEmail(shareEmail)) {
       setShareError('Please enter a valid email address.');
@@ -876,23 +664,19 @@ const App = () => {
       await shareSchedularrCalendar(calendarId, shareEmail, accessToken);
       setShareSuccess(`Calendar shared successfully with ${shareEmail}!`);
       setShareEmail('');
-      // Update shared users
       const updatedUsers = await fetchSharedUsers(calendarId, accessToken);
       setSharedUsers(updatedUsers);
-      // Set timeout to clear the success message after 10 seconds
       setTimeout(() => {
         setShareSuccess('');
       }, 10000);
     } catch (err) {
       setShareError(err.message);
-      // Set timeout to clear the error message after 10 seconds
       setTimeout(() => {
         setShareError('');
       }, 10000);
     }
   };
 
-  // Auto-calculate end time, end date, and fee
   useEffect(() => {
     if (event.startDate && event.startTime && event.duration) {
       if (!validateTime(event.startTime)) {
@@ -900,27 +684,20 @@ const App = () => {
         return;
       }
       setTimeError('');
-
       const [year, month, day] = event.startDate.split('-');
       const isoDate = `${year}-${month}-${day}`;
       const start = new Date(`${isoDate}T${event.startTime}`);
-
       if (isNaN(start.getTime())) {
         console.error('Invalid date format:', `${isoDate}T${event.startTime}`);
         setTimeError('Invalid date or time format.');
         return;
       }
-
       const durationMs = parseFloat(event.duration) * 60 * 60 * 1000;
       const end = new Date(start.getTime() + durationMs);
-
       const calculatedEndDate = end.toISOString().split('T')[0];
       const calculatedEndTime = end.toTimeString().slice(0, 5);
-
       setEndTime(calculatedEndTime);
       setEndDate(calculatedEndDate);
-
-      // Calculate fee as an integer (no decimals)
       const calculatedFee = parseFloat(event.duration) * hourlyRate;
       setCost(Math.round(calculatedFee));
     } else {
@@ -931,7 +708,6 @@ const App = () => {
     }
   }, [event.startDate, event.startTime, event.duration, hourlyRate]);
 
-  // Submit event
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmissionError('');
@@ -1047,7 +823,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
     }
   };
 
-  // Render
   return (
     <div className="w-full max-w-lg mx-auto p-4 sm:p-6">
       {submissionError && (
@@ -1062,96 +837,36 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
       {!isSignedIn ? (
         <div className="text-center">
           <p className="text-lg text-gray-300 mb-8">It's time to:</p>
-         
           <div className="relative mx-auto mb-4 w-16 h-16">
             <img src={logo} alt="Schedularr Logo" className="w-full h-full transition-transform duration-300 hover:scale-125" style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
-          
-          
           <h1 className="mb-2 text-5xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-2">
             Schedularr
           </h1>
-          
-   {/* Replace the old static paragraph with the RandomEnding component */}
-   
-   <div className="relative left-1/2 transform -translate-x-1/2 w-full max-w-[300px] text-lg mb-8">
-  <RandomEnding className="relative left-1/2 transform -translate-x-1/2 w-full max-w-[300px]" />
-</div>
-   
-      {/* <s className="text-base text-red-400">&nbsp;cancel&nbsp;</s>
-      <a className="text-base text-green-400">&nbsp;&nbsp;book&nbsp;&nbsp;</a>
-      <br></br> */}
-          {/* The following static text was removed and replaced by RandomEnding */}
-          {/* <p className="text-lg text-gray-300 mb-8">
-  <s className="text-red-300">Don’t</s> use Schedularr if you'd  rather be at the beach 🏝️
-</p> */}
-          {/* <p className="text-lg text-gray-300 mb-4">Helping You Book Life 🏝️</p> */}
-
-{/* Replace Button with Google Sign-In Button */}
-      {/* Replace Button with Google Sign-In Button */}
-<button
-  className="gsi-material-button mx-auto py-3 px-6 mb-2 mr-2 transition-grow duration-300 p-1"
-  onClick={handleSignIn}
-  style={{ cursor: 'pointer' }}
->
-  <div className="gsi-material-button-state"></div>
-  <div className="gsi-material-button-content-wrapper">
-    <div className="gsi-material-button-icon">
-      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-        <path fill="none" d="M0 0h48v48H0z"></path>
-      </svg>
-    </div>
-    <span className="gsi-material-button-contents">Sign in with Google</span>
-    <span style={{ display: 'none' }}>Sign in with Google</span>
-  </div>
-</button>
-
-<br></br>
-          {/* <Button
+          <div className="relative left-1/2 transform -translate-x-1/2 w-full max-w-[300px] text-lg mb-8">
+            <RandomEnding className="relative left-1/2 transform -translate-x-1/2 w-full max-w-[300px]" />
+          </div>
+          <button
+            className="gsi-material-button mx-auto py-3 px-6 mb-2 mr-2 transition-grow duration-300 p-1"
             onClick={handleSignIn}
-            variant="gradient"
-            className="py-3 px-6 text-lg font-semibold flex items-center justify-center mx-auto mb-2"
-            buttonGradient={buttonGradient}
+            style={{ cursor: 'pointer' }}
           >
-            <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">login</span> Login with Google
-          </Button> */}
-
-
-
-          {/* <div className="text-center relative">
-            <Button
-              variant="share"
-              className="py-2 px-4 text-lg font-semibold"
-              onClick={() => setShowGuide(!showGuide)}
-              buttonGradient="dark-grey"
-            >
-            Guide
-            </Button>
-            {showGuide && (
-              <div className=" text-xs text-gray-300 bg-gray-700/50 p-4 rounded-lg mt-2 text-left transform transition-all duration-300 ease-in-out origin-top scale-y-0 opacity-0 data-[visible=true]:scale-y-100 data-[visible=true]:opacity-100" data-visible="true">
-                <p className="mb-2 font-bold">
-                Rule the Scheduling Galaxy 🌀
-                </p>
-                <p className="mb-2">
-                    Schedularr spices up your google calendar with a declarative 'Schedularr' calendar, making it a blast to sort out childcare, care for the elderly, pet sitting, or swapping chores with mates. 
-                    </p>
-                <p className="mb-2">
-                    - Set rates in £ or 🍺, go wild, and make calendars cool again! 🎉
-                  </p>
-                <p className="mb-2">
-                  - Sign in with Google to get started.
-                </p>
-                <p className="mt-2">
-                  - Visit the Admin tab after signing in for more detailed instructions.
-                </p>
+            <div className="gsi-material-button-state"></div>
+            <div className="gsi-material-button-content-wrapper">
+              <div className="gsi-material-button-icon">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                  <path fill="none" d="M0 0h48v48H0z"></path>
+                </svg>
               </div>
-            )}
-          </div> */}
-
+              <span className="gsi-material-button-contents">Sign in with Google</span>
+              <span style={{ display: 'none' }}>Sign in with Google</span>
+            </div>
+          </button>
+          <br />
           <div className="text-center">
             <p className="text-[10px] text-gray-400 opacity-70 mt-2">
               <a onClick={handleSkipLogin} className="text-blue-400 hover:underline cursor-pointer">- skip -</a>
@@ -1159,28 +874,22 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
           </div>
         </div>
       ) : (
-        
         <>
           <div className="text-center mb-4 flex flex-col items-center">
-          <Tooltip message="I am tooltip 🚀" position="bottom">
-            <p className="text-lg text-gray-300 mb-2">Welcome, {userName}!</p>
+            <Tooltip message="I am tooltip 🚀" position="bottom">
+              <p className="text-lg text-gray-300 mb-2">Welcome, {userName}!</p>
             </Tooltip>
             <h1 className="text-4xl font-extrabold flex items-center">
               <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Schedularr</span>
               <span className="relative w-8 h-8 ml-2">
-                <img src={logo} alt="Schedularr Logo" className="w-full h-full " style={{ filter: 'brightness(0) invert(1)' }} />
+                <img src={logo} alt="Schedularr Logo" className="w-full h-full" style={{ filter: 'brightness(0) invert(1)' }} />
               </span>
             </h1>
           </div>
-          
-
-          
-
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
               <TabsTrigger tabValue="booking" value={activeTab} onValueChange={setActiveTab} variant="gradient" buttonGradient={buttonGradient}>
                 <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">event</span> Booking
-                
               </TabsTrigger>
               <TabsTrigger tabValue="settings" value={activeTab} onValueChange={setActiveTab} variant="gradientReverse" buttonGradient={buttonGradient}>
                 <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">settings</span> Admin
@@ -1189,8 +898,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <TabsContent tabValue="booking" value={activeTab}>
               <Card className="w-full max-w-[400px] mx-auto">
                 <CardHeader>
-                  
-                  <CardTitle inputGradient={inputGradient}>{UserAppTitle}</CardTitle>
+                  <CardTitle inputGradient={inputGradient}>{appTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {timeError && (
@@ -1221,56 +929,50 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       Booking Sent! 🎉
                     </Alert>
                   )}
-
-                  {/* // Form for booking begins here */}
-
                   <div className="space-y-6">
-                    
-                  <div className="relative flex items-center">
-                  <Tooltip message="Event 🚀" position="bottom">
-                    <span className={cn(
-                      "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                      inputGradient === "grey-yellow" ? "text-yellow-400" :
-                      inputGradient === "blue-purple" ? "text-blue-400" :
-                      inputGradient === "green-cyan" ? "text-green-400" :
-                      inputGradient === "dark-grey" ? "text-gray-400" :
-                      inputGradient === "red-orange" ? "text-red-400" :
-                      inputGradient === "retro-pink" ? "text-pink-400" :
-                      inputGradient === "retro-teal" ? "text-teal-400" :
-                      inputGradient === "brown-gold" ? "text-amber-400" :
-                      inputGradient === "white-grey" ? "text-gray-600" :
-                      "text-blue-400"
-                    )}>public</span>
-                    </Tooltip>
-                    <Input
-                      name="name"
-                      value={event.name}
-                      onChange={handleInputChange}
-                      placeholder="Visiting Mars"
-                      required
-                      inputGradient={inputGradient}
-                      className="pr-8"
-                    />
-                    
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
-                  </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="relative flex items-center">
-                      <Tooltip message="Event Date 📅" position="bottom">
+                    <div className="relative flex items-center">
+                      <Tooltip message="Event 🚀" position="bottom">
                         <span className={cn(
                           "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                          inputGradient === "blue-purple" ? "text-blue-400" : 
-                          inputGradient === "green-cyan" ? "text-green-400" : 
-                          inputGradient === "dark-grey" ? "text-grey-400" : 
-                          inputGradient === "red-orange" ? "text-red-400" : 
-                          inputGradient === "retro-pink" ? "text-pink-400" : 
-                          inputGradient === "retro-teal" ? "text-teal-400" : 
-                          inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "white-grey" ? "text-gray-600" : 
-                          "text-blue-400"
-                        )}>event</span>
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'purple' ? 'text-blue-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
+                        )}>public</span>
+                      </Tooltip>
+                      <Input
+                        name="name"
+                        value={event.name}
+                        onChange={handleInputChange}
+                        placeholder="Visiting Mars"
+                        required
+                        inputGradient={inputGradient}
+                        className="pr-8"
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="relative flex items-center">
+                        <Tooltip message="Event Date 📅" position="bottom">
+                          <span className={cn(
+                            "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                            inputGradient === 'yellow' ? 'text-yellow-400' :
+                            inputGradient === 'purple' ? 'text-blue-400' :
+                            inputGradient === 'cyan' ? 'text-green-400' :
+                            inputGradient === 'grey' ? 'text-gray-400' :
+                            inputGradient === 'orange' ? 'text-red-400' :
+                            inputGradient === 'pink' ? 'text-pink-400' :
+                            inputGradient === 'teal' ? 'text-teal-400' :
+                            inputGradient === 'gold' ? 'text-amber-400' :
+                            inputGradient === 'white' ? 'text-gray-600' :
+                            'text-blue-400'
+                          )}>event</span>
                         </Tooltip>
                         <Input
                           type="date"
@@ -1281,25 +983,23 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient={inputGradient}
                           className="pr-8"
                         />
-                       <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
-                      
-
                       <div className="relative flex items-center">
-                      <Tooltip message="Event start time ⏱️" position="bottom">
-                        <span className={cn(
-                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                          inputGradient === "blue-purple" ? "text-blue-400" : 
-                          inputGradient === "green-cyan" ? "text-green-400" : 
-                          inputGradient === "dark-grey" ? "text-grey-400" : 
-                          inputGradient === "red-orange" ? "text-red-400" : 
-                          inputGradient === "retro-pink" ? "text-pink-400" : 
-                          inputGradient === "retro-teal" ? "text-teal-400" : 
-                          inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "white-grey" ? "text-gray-600" : 
-                          "text-blue-400"
-                        )}>access_time</span>
+                        <Tooltip message="Event start time ⏱️" position="bottom">
+                          <span className={cn(
+                            "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                            inputGradient === 'yellow' ? 'text-yellow-400' :
+                            inputGradient === 'purple' ? 'text-blue-400' :
+                            inputGradient === 'cyan' ? 'text-green-400' :
+                            inputGradient === 'grey' ? 'text-gray-400' :
+                            inputGradient === 'orange' ? 'text-red-400' :
+                            inputGradient === 'pink' ? 'text-pink-400' :
+                            inputGradient === 'teal' ? 'text-teal-400' :
+                            inputGradient === 'gold' ? 'text-amber-400' :
+                            inputGradient === 'white' ? 'text-gray-600' :
+                            'text-blue-400'
+                          )}>access_time</span>
                         </Tooltip>
                         <Input
                           type="time"
@@ -1313,22 +1013,21 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
                     </div>
-                    
                     <div className="relative flex items-center">
-                    <Tooltip message="How long is event ⏳" position="bottom">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>hourglass_empty</span>
+                      <Tooltip message="How long is event ⏳" position="bottom">
+                        <span className={cn(
+                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'purple' ? 'text-blue-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
+                        )}>hourglass_empty</span>
                       </Tooltip>
                       <div className="relative w-full">
                         <Input
@@ -1347,24 +1046,24 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
                     </div>
-                    
-                      <Divider inputGradient={inputGradient} />
+
+                    <Divider inputGradient={inputGradient} label="Auto Calculated" />
 
                     <div className="flex items-center">
-                    <Tooltip message="[auto] End time ⏰" position="bottom">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>event_available</span>
+                      <Tooltip message="[auto] End time ⏰" position="bottom">
+                        <span className={cn(
+                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'purple' ? 'text-blue-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
+                        )}>event_available</span>
                       </Tooltip>
                       <div className="relative w-full">
                         <Input
@@ -1376,25 +1075,25 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient={inputGradient}
                         />
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">end</span>
-                        
                       </div>
                     </div>
 
+                    
                     <div className="flex items-center">
-                    <Tooltip message="[auto] Currency & Fee 💰/🍰" position="bottom">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>account_balance_wallet</span>
+                      <Tooltip message="[auto] Currency & Fee 💰/🍰" position="bottom">
+                        <span className={cn(
+                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'purple' ? 'text-blue-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
+                        )}>account_balance_wallet</span>
                       </Tooltip>
                       <div className="flex items-center w-full gap-[2px]">
                         <Input
@@ -1406,38 +1105,42 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           onClick={() => setActiveTab('settings')}
                         />
                         <div className="relative w-4/5">
-                        <Tooltip message="[auto] agreed trade 🤝" position="bottom">
-                          <Input
-                            type="text"
-                            value={cost || ''}
-                            readOnly
-                            className={cn("pr-12 cursor-pointer", cost ? 'text-white' : 'text-gray-400')}
-                            inputGradient={inputGradient}
-                            onClick={() => setActiveTab('settings')}
-                          />
-                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">fee</span>
-                          </Tooltip>
+                          
+                            <Input
+                              type="text"
+                              value={cost || ''}
+                              readOnly
+                              className={cn("pr-12 cursor-pointer", cost ? 'text-white' : 'text-gray-400')}
+                              inputGradient={inputGradient}
+                              onClick={() => setActiveTab('settings')}
+                            />
+                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">fee</span>
+                         
                         </div>
                       </div>
                     </div>
 
-                    <Divider inputGradient={inputGradient} />
+                    
+
+                    {/* Notes */}
+
+                    <Divider inputGradient={inputGradient} label="Notes" />
 
                     <div className="flex items-center">
-                    <Tooltip message="Notes 📝" position="bottom">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>edit</span>
+                      <Tooltip message="Notes 📝" position="bottom">
+                        <span className={cn(
+                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'purple' ? 'text-blue-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
+                        )}>edit</span>
                       </Tooltip>
                       <Input
                         name="note"
@@ -1467,6 +1170,9 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                 </CardContent>
               </Card>
             </TabsContent>
+
+{/* Admin tab */}
+
             <TabsContent tabValue="settings" value={activeTab}>
               <Card className="w-full max-w-[400px] mx-auto">
                 <CardHeader>
@@ -1507,184 +1213,198 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
+                        inputGradient === 'yellow' ? 'text-yellow-400' :
+                        inputGradient === 'purple' ? 'text-blue-400' :
+                        inputGradient === 'cyan' ? 'text-green-400' :
+                        inputGradient === 'grey' ? 'text-gray-400' :
+                        inputGradient === 'orange' ? 'text-red-400' :
+                        inputGradient === 'pink' ? 'text-pink-400' :
+                        inputGradient === 'teal' ? 'text-teal-400' :
+                        inputGradient === 'gold' ? 'text-amber-400' :
+                        inputGradient === 'white' ? 'text-gray-600' :
+                        'text-blue-400'
                       )}>font_download</span>
                       <Input
-                        value={UserAppTitle}
-                        onChange={handleUserAppTitleChange}
+                        value={appTitle}
+                        onChange={handleAppTitleChange}
                         placeholder="A Grande Day Out"
                         inputGradient={inputGradient}
                       />
                     </div>
+
+ {/* Calendar lists */}
+
+ <Divider inputGradient={inputGradient} label="Calendar & Sharing" />
+
+               <div className="flex items-center">
+  <span className={cn(
+    "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+    inputGradient === 'yellow' ? 'text-yellow-400' :
+    inputGradient === 'purple' ? 'text-blue-400' :
+    inputGradient === 'cyan' ? 'text-green-400' :
+    inputGradient === 'grey' ? 'text-gray-400' :
+    inputGradient === 'orange' ? 'text-red-400' :
+    inputGradient === 'pink' ? 'text-pink-400' :
+    inputGradient === 'teal' ? 'text-teal-400' :
+    inputGradient === 'gold' ? 'text-amber-400' :
+    inputGradient === 'white' ? 'text-gray-600' :
+    'text-blue-400'
+  )}>calendar_today</span>
+  {calendarId ? (
+    <div className="flex items-center gap-x-4">
+      <p className="text-white cursor-pointer hover:underline" onClick={openCalendarLink}>{calendarName}</p>
+      <Button
+        variant="text"
+        className={cn(
+          "text-sm",
+          inputGradient === 'yellow' ? 'text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500' :
+          inputGradient === 'cyan' ? 'text-green-400 hover:text-green-300 focus:ring-green-500' :
+          inputGradient === 'grey' ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500' :
+          inputGradient === 'orange' ? 'text-red-400 hover:text-red-300 focus:ring-red-500' :
+          inputGradient === 'pink' ? 'text-pink-400 hover:text-pink-300 focus:ring-pink-500' :
+          inputGradient === 'teal' ? 'text-teal-400 hover:text-teal-300 focus:ring-teal-500' :
+          inputGradient === 'gold' ? 'text-amber-400 hover:text-amber-300 focus:ring-amber-500' :
+          inputGradient === 'white' ? 'text-gray-600 hover:text-gray-500 focus:ring-gray-400' :
+          'text-blue-400 hover:text-blue-300 focus:ring-blue-500'
+        )}
+        onClick={() => {
+          setShowCalendarList(true);
+          setShowCustomCalendarInput(false); // Close custom calendar input when choosing existing calendar
+        }}
+        buttonGradient={buttonGradient}
+      >
+        Choose
+      </Button>
+      <Button
+        variant="text"
+        className={cn(
+          "text-sm",
+          inputGradient === 'yellow' ? 'text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500' :
+          inputGradient === 'cyan' ? 'text-green-400 hover:text-green-300 focus:ring-green-500' :
+          inputGradient === 'grey' ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500' :
+          inputGradient === 'orange' ? 'text-red-400 hover:text-red-300 focus:ring-red-500' :
+          inputGradient === 'pink' ? 'text-pink-400 hover:text-pink-300 focus:ring-pink-500' :
+          inputGradient === 'teal' ? 'text-teal-400 hover:text-teal-300 focus:ring-teal-500' :
+          inputGradient === 'gold' ? 'text-amber-400 hover:text-amber-300 focus:ring-amber-500' :
+          inputGradient === 'white' ? 'text-gray-600 hover:text-gray-500 focus:ring-gray-400' :
+          'text-blue-400 hover:text-blue-300 focus:ring-blue-500'
+        )}
+        onClick={() => {
+          setShowCustomCalendarInput(true);
+          setShowCalendarList(false); // Close calendar list when opening custom input
+        }}
+        buttonGradient={buttonGradient}
+      >
+        New Custom
+      </Button>
+    </div>
+  ) : (
+    <div className="w-full">
+      <Button
+        variant="gradient"
+        onClick={() => createSchedularrCalendar(accessToken, calendarName)
+          .then(id => {
+            setCalendarId(id);
+            localStorage.setItem('calendarId', id);
+            setSubmissionOutput(`${calendarName} calendar found or created successfully!`);
+          })
+          .catch(err => setSubmissionError(err.message))
+        }
+        className="mb-2 w-full"
+        buttonGradient={buttonGradient}
+      >
+        Create {calendarName} Calendar
+      </Button>
+      <p className="text-sm text-gray-400 mb-2">Or enter an existing Calendar ID:</p>
+      <Textarea
+        value={calendarId}
+        onChange={handleCalendarIdChange}
+        placeholder="e.g - abc123@group.calendar.google.com"
+        rows="2"
+        inputGradient={inputGradient}
+      />
+    </div>
+  )}
+</div>
+{showCustomCalendarInput && (
+  <div className="flex items-center mt-4">
+    <span className={cn(
+      "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+      inputGradient === 'yellow' ? 'text-yellow-400' :
+      inputGradient === 'purple' ? 'text-blue-400' :
+      inputGradient === 'cyan' ? 'text-green-400' :
+      inputGradient === 'grey' ? 'text-gray-400' :
+      inputGradient === 'orange' ? 'text-red-400' :
+      inputGradient === 'pink' ? 'text-pink-400' :
+      inputGradient === 'teal' ? 'text-teal-400' :
+      inputGradient === 'gold' ? 'text-amber-400' :
+      inputGradient === 'white' ? 'text-gray-600' :
+      'text-blue-400'
+    )}>calendar_today</span>
+    <div className="w-full flex items-center gap-2">
+      <Input
+        value={customCalendarName}
+        onChange={handleCustomCalendarNameChange}
+        placeholder="Custom Calendar Name"
+        inputGradient={inputGradient}
+        className="flex-1"
+      />
+      <Button
+        variant="gradient"
+        onClick={handleCreateCustomCalendar}
+        className="py-2 px-4 text-lg font-semibold"
+        buttonGradient={buttonGradient}
+      >
+        Create
+      </Button>
+    </div>
+  </div>
+)}
+{showCalendarList && (
+  <div className="flex items-center mt-4">
+    <span className={cn(
+      "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+      inputGradient === 'yellow' ? 'text-yellow-400' :
+      inputGradient === 'purple' ? 'text-blue-400' :
+      inputGradient === 'cyan' ? 'text-green-400' :
+      inputGradient === 'grey' ? 'text-gray-400' :
+      inputGradient === 'orange' ? 'text-red-400' :
+      inputGradient === 'pink' ? 'text-pink-400' :
+      inputGradient === 'teal' ? 'text-teal-400' :
+      inputGradient === 'gold' ? 'text-amber-400' :
+      inputGradient === 'white' ? 'text-gray-600' :
+      'text-blue-400'
+    )}>calendar_today</span>
+    <select
+      onChange={(e) => {
+        const selectedCalendar = calendarList.find(cal => cal.id === e.target.value);
+        if (selectedCalendar) handleCalendarSelect(selectedCalendar);
+      }}
+      className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
+    >
+      <option value="">Select a calendar...</option>
+      {calendarList.map(calendar => (
+        <option key={calendar.id} value={calendar.id}>{calendar.summary}</option>
+      ))}
+    </select>
+  </div>
+)}
+
+                    {/* Invite email / list of shared with users */}
+
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>calendar_today</span>
-                      {calendarId ? (
-                        <div className="flex items-center">
-                          <p className="text-white cursor-pointer hover:underline" onClick={openCalendarLink}>{calendarName}</p>
-                          <Button
-                          variant="text"
-                            className={cn(
-                              "ml-2",
-                              inputGradient === "grey-yellow" ? "text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500" :
-                              inputGradient === "green-cyan" ? "text-green-400 hover:text-green-300 focus:ring-green-500" :
-                              inputGradient === "dark-grey" ? "text-gray-400 hover:text-gray-300 focus:ring-gray-500" :
-                              inputGradient === "red-orange" ? "text-red-400 hover:text-red-300 focus:ring-red-500" :
-                              inputGradient === "retro-pink" ? "text-pink-400 hover:text-pink-300 focus:ring-pink-500" :
-                              inputGradient === "retro-teal" ? "text-teal-400 hover:text-teal-300 focus:ring-teal-500" :
-                              inputGradient === "brown-gold" ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500" :
-                              inputGradient === "white-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
-                              "text-blue-400 hover:text-blue-300 focus:ring-blue-500"
-                            )}
-                            onClick={() => setShowCalendarList(true)}
-                            buttonGradient={buttonGradient}
-                          >
-                            Select
-                          </Button>
-                          <Button
-                            variant="text"
-                            className={cn(
-                              "ml-2",
-                              inputGradient === "grey-yellow" ? "text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500" :
-                              inputGradient === "green-cyan" ? "text-green-400 hover:text-green-300 focus:ring-green-500" :
-                              inputGradient === "dark-grey" ? "text-gray-400 hover:text-gray-300 focus:ring-gray-500" :
-                              inputGradient === "red-orange" ? "text-red-400 hover:text-red-300 focus:ring-red-500" :
-                              inputGradient === "retro-pink" ? "text-pink-400 hover:text-pink-300 focus:ring-pink-500" :
-                              inputGradient === "retro-teal" ? "text-teal-400 hover:text-teal-300 focus:ring-teal-500" :
-                              inputGradient === "brown-gold" ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500" :
-                              inputGradient === "white-grey" ? "text-gray-600 hover:text-gray-500 focus:ring-gray-400" :
-                              "text-blue-400 hover:text-blue-300 focus:ring-blue-500"
-                            )}
-                            onClick={() => setShowCustomCalendarInput(true)}
-                            buttonGradient={buttonGradient}
-                          >
-                            New Custom
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="w-full">
-                          <Button
-                            variant="gradient"
-                            onClick={() => createSchedularrCalendar(accessToken, calendarName)
-                              .then(id => {
-                                setCalendarId(id);
-                                localStorage.setItem('calendarId', id);
-                                setSubmissionOutput(`${calendarName} calendar found or created successfully!`);
-                              })
-                              .catch(err => setSubmissionError(err.message))
-                            }
-                            className="mb-2 w-full"
-                            buttonGradient={buttonGradient}
-                          >
-                            Create {calendarName} Calendar
-                          </Button>
-                          <p className="text-sm text-gray-400 mb-2">Or enter an existing Calendar ID:</p>
-                          <Textarea
-                            value={calendarId}
-                            onChange={handleCalendarIdChange}
-                            placeholder="e.g., abc123@group.calendar.google.com"
-                            rows="2"
-                            inputGradient={inputGradient}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    {showCustomCalendarInput && (
-                      <div className="flex items-center">
-                        <span className={cn(
-                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                          inputGradient === "blue-purple" ? "text-blue-400" : 
-                          inputGradient === "green-cyan" ? "text-green-400" : 
-                          inputGradient === "dark-grey" ? "text-grey-400" : 
-                          inputGradient === "red-orange" ? "text-red-400" : 
-                          inputGradient === "retro-pink" ? "text-pink-400" : 
-                          inputGradient === "retro-teal" ? "text-teal-400" : 
-                          inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "white-grey" ? "text-gray-600" : 
-                          "text-blue-400"
-                        )}>calendar_today</span>
-                        <div className="w-full flex items-center gap-2">
-                          <Input
-                            value={customCalendarName}
-                            onChange={handleCustomCalendarNameChange}
-                            placeholder="Custom Calendar Name"
-                            inputGradient={inputGradient}
-                            className="flex-1"
-                          />
-                          <Button
-                            variant="gradient"
-                            onClick={handleCreateCustomCalendar}
-                            className="py-2 px-4 text-lg font-semibold"
-                            buttonGradient={buttonGradient}
-                          >
-                            Create
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    {showCalendarList && (
-                      <div className="flex items-center">
-                        <span className={cn(
-                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                          inputGradient === "blue-purple" ? "text-blue-400" : 
-                          inputGradient === "green-cyan" ? "text-green-400" : 
-                          inputGradient === "dark-grey" ? "text-grey-400" : 
-                          inputGradient === "red-orange" ? "text-red-400" : 
-                          inputGradient === "retro-pink" ? "text-pink-400" : 
-                          inputGradient === "retro-teal" ? "text-teal-400" : 
-                          inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "white-grey" ? "text-gray-600" : 
-                          "text-blue-400"
-                        )}>calendar_today</span>
-                        <select
-                          onChange={(e) => {
-                            const selectedCalendar = calendarList.find(cal => cal.id === e.target.value);
-                            if (selectedCalendar) handleCalendarSelect(selectedCalendar);
-                          }}
-                          className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
-                        >
-                          <option value="">Select a calendar...</option>
-                          {calendarList.map(calendar => (
-                            <option key={calendar.id} value={calendar.id}>{calendar.summary}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
+                        inputGradient === 'yellow' ? 'text-yellow-400' :
+                        inputGradient === 'purple' ? 'text-blue-400' :
+                        inputGradient === 'cyan' ? 'text-green-400' :
+                        inputGradient === 'grey' ? 'text-gray-400' :
+                        inputGradient === 'orange' ? 'text-red-400' :
+                        inputGradient === 'pink' ? 'text-pink-400' :
+                        inputGradient === 'teal' ? 'text-teal-400' :
+                        inputGradient === 'gold' ? 'text-amber-400' :
+                        inputGradient === 'white' ? 'text-gray-600' :
+                        'text-blue-400'
                       )}>share</span>
                       <div className="w-full flex flex-col sm:flex-row items-center gap-2">
                         <Input
@@ -1709,28 +1429,28 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       <div className="flex items-center">
                         <span className={cn(
                           "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                          inputGradient === "blue-purple" ? "text-blue-400" : 
-                          inputGradient === "green-cyan" ? "text-green-400" : 
-                          inputGradient === "dark-grey" ? "text-grey-400" : 
-                          inputGradient === "red-orange" ? "text-red-400" : 
-                          inputGradient === "retro-pink" ? "text-pink-400" : 
-                          inputGradient === "retro-teal" ? "text-teal-400" : 
-                          inputGradient === "brown-gold" ? "text-amber-400" : 
-                          inputGradient === "white-grey" ? "text-gray-600" : 
-                          "text-blue-400"
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'purple' ? 'text-blue-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
                         )}>person</span>
                         <p className={cn(
                           "text-sm",
-                          inputGradient === "grey-yellow" ? "text-yellow-400" :
-                          inputGradient === "green-cyan" ? "text-green-400" :
-                          inputGradient === "dark-grey" ? "text-gray-400" :
-                          inputGradient === "red-orange" ? "text-red-400" :
-                          inputGradient === "retro-pink" ? "text-pink-400" :
-                          inputGradient === "retro-teal" ? "text-teal-400" :
-                          inputGradient === "brown-gold" ? "text-amber-400" :
-                          inputGradient === "white-grey" ? "text-gray-600" :
-                          "text-blue-400"
+                          inputGradient === 'yellow' ? 'text-yellow-400' :
+                          inputGradient === 'cyan' ? 'text-green-400' :
+                          inputGradient === 'grey' ? 'text-gray-400' :
+                          inputGradient === 'orange' ? 'text-red-400' :
+                          inputGradient === 'pink' ? 'text-pink-400' :
+                          inputGradient === 'teal' ? 'text-teal-400' :
+                          inputGradient === 'gold' ? 'text-amber-400' :
+                          inputGradient === 'white' ? 'text-gray-600' :
+                          'text-blue-400'
                         )}>
                           <span className="font-bold">Shared with:</span> {sharedUsers.join(', ')}
                         </p>
@@ -1756,146 +1476,95 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       </Alert>
                     )}
 
+            {/* Hourly Rate & Currency inputs */}
 
-                  <Divider inputGradient={inputGradient} />
+                    <Divider inputGradient={inputGradient} label="Hourly Rate & Currency" />
 
-                  <Divider inputGradient={inputGradient} label="App colour" />
+  <div className="flex items-center">
+  <span className={cn(
+    "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+    inputGradient === 'yellow' ? 'text-yellow-400' :
+    inputGradient === 'purple' ? 'text-blue-400' :
+    inputGradient === 'cyan' ? 'text-green-400' :
+    inputGradient === 'grey' ? 'text-gray-400' :
+    inputGradient === 'orange' ? 'text-red-400' :
+    inputGradient === 'pink' ? 'text-pink-400' :
+    inputGradient === 'teal' ? 'text-teal-400' :
+    inputGradient === 'gold' ? 'text-amber-400' :
+    inputGradient === 'white' ? 'text-gray-600' :
+    'text-blue-400'
+  )}>account_balance_wallet</span>
+  <div className="relative w-full">
+    
+    <Input
+      type="number"
+      value={hourlyRate}
+      onChange={handleHourlyRateChange}
+      placeholder="Fee per unit"
+      step="1"
+      min="0"
+      className="pl-10 pr-12 text-center custom-number-input"
+      inputGradient={inputGradient}
+    />
+    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">/ hr</span>
+  </div>
+</div>
 
-                  <Divider inputGradient={inputGradient} icon="star" />
+<div className="flex items-center">
+  <span className={cn(
+    "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+    inputGradient === 'yellow' ? 'text-yellow-400' :
+    inputGradient === 'purple' ? 'text-blue-400' :
+    inputGradient === 'cyan' ? 'text-green-400' :
+    inputGradient === 'grey' ? 'text-gray-400' :
+    inputGradient === 'orange' ? 'text-red-400' :
+    inputGradient === 'pink' ? 'text-pink-400' :
+    inputGradient === 'teal' ? 'text-teal-400' :
+    inputGradient === 'gold' ? 'text-amber-400' :
+    inputGradient === 'white' ? 'text-gray-600' :
+    'text-blue-400'
+  )}>currency_exchange</span>
+  <div className="relative w-full">
+    <Input
+      value={currency}
+      onChange={handleCurrencyChange}
+      placeholder="Currency"
+      maxLength="3"
+      inputGradient={inputGradient}
+      className="pl-10 pr-12 text-center"
+    />
+    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">£ $ 🍺</span>
+  </div>
+</div>
 
+                {/* Colour Pickers */}
 
+                    <Divider inputGradient={inputGradient} label="Colour Themes" />
+                    <ColourDropdown
+                      value={inputGradient}
+                      onChange={handleInputGradientChange}
+                      icon="palette"
+                      inputGradient={inputGradient}
+                    />
+                    <ColourDropdown
+                      value={buttonGradient}
+                      onChange={handleButtonGradientChange}
+                      icon="radio_button_checked"
+                      inputGradient={inputGradient}
+                    />
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>account_balance_wallet</span>
-                      <div className="relative w-full">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white">{currency}</span>
-                        <Input
-                          type="number"
-                          value={hourlyRate}
-                          onChange={handleHourlyRateChange}
-                          placeholder="Fee per unit"
-                          step="1"
-                          min="0"
-                          className="pl-10 pr-12"
-                          inputGradient={inputGradient}
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">/hr</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>currency_exchange</span>
-                      <div className="relative w-full">
-                        <Input
-                          value={currency}
-                          onChange={handleCurrencyChange}
-                          placeholder="Currency"
-                          maxLength="3"
-                          inputGradient={inputGradient}
-                          className="pr-24"
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">e.g., £, $, 🍺</span>
-                      </div>
-                    </div>
-
-
-                  <Divider inputGradient={inputGradient} />
-
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>palette</span>
-                      <select
-                        value={inputGradient}
-                        onChange={handleInputGradientChange}
-                        className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
-                      >
-                        <option value="grey-yellow">Grey/Yellow Glow</option>
-                        <option value="blue-purple">Blue/Purple Glow</option>
-                        <option value="green-cyan">Green/Cyan Glow</option>
-                        <option value="dark-grey">Dark Grey Glow</option>
-                        <option value="red-orange">Red/Orange Glow</option>
-                        <option value="retro-pink">Retro Pink Glow</option>
-                        <option value="retro-teal">Retro Teal Glow</option>
-                        <option value="brown-gold">Brown/Gold Glow</option>
-                        <option value="white-grey">white/Grey Glow</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
-                      )}>radio_button_checked</span>
-                      <select
-                        value={buttonGradient}
-                        onChange={handleButtonGradientChange}
-                        className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
-                      >
-                        <option value="grey-yellow">Grey/Yellow Glow</option>
-                        <option value="blue-purple">Blue/Purple Glow</option>
-                        <option value="green-cyan">Green/Cyan Glow</option>
-                        <option value="dark-grey">Dark Grey Glow</option>
-                        <option value="red-orange">Red/Orange Glow</option>
-                        <option value="retro-pink">Retro Pink Glow</option>
-                        <option value="retro-teal">Retro Teal Glow</option>
-                        <option value="brown-gold">Brown/Gold Glow</option>
-                        <option value="white-grey">white/Grey Glow</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
+                        inputGradient === 'yellow' ? 'text-yellow-400' :
+                        inputGradient === 'purple' ? 'text-blue-400' :
+                        inputGradient === 'cyan' ? 'text-green-400' :
+                        inputGradient === 'grey' ? 'text-gray-400' :
+                        inputGradient === 'orange' ? 'text-red-400' :
+                        inputGradient === 'pink' ? 'text-pink-400' :
+                        inputGradient === 'teal' ? 'text-teal-400' :
+                        inputGradient === 'gold' ? 'text-amber-400' :
+                        inputGradient === 'white' ? 'text-gray-600' :
+                        'text-blue-400'
                       )}>settings</span>
                       <Button
                         variant="gradient"
@@ -1907,21 +1576,23 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       </Button>
                     </div>
 
-                  <Divider inputGradient={inputGradient} /> 
+                  {/* Dev Mode */}
+
+                  <Divider inputGradient={inputGradient} label="<Dev> Mode" />
 
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === "grey-yellow" ? "text-yellow-400" : 
-                        inputGradient === "blue-purple" ? "text-blue-400" : 
-                        inputGradient === "green-cyan" ? "text-green-400" : 
-                        inputGradient === "dark-grey" ? "text-grey-400" : 
-                        inputGradient === "red-orange" ? "text-red-400" : 
-                        inputGradient === "retro-pink" ? "text-pink-400" : 
-                        inputGradient === "retro-teal" ? "text-teal-400" : 
-                        inputGradient === "brown-gold" ? "text-amber-400" : 
-                        inputGradient === "white-grey" ? "text-gray-600" : 
-                        "text-blue-400"
+                        inputGradient === 'yellow' ? 'text-yellow-400' :
+                        inputGradient === 'purple' ? 'text-blue-400' :
+                        inputGradient === 'cyan' ? 'text-green-400' :
+                        inputGradient === 'grey' ? 'text-gray-400' :
+                        inputGradient === 'orange' ? 'text-red-400' :
+                        inputGradient === 'pink' ? 'text-pink-400' :
+                        inputGradient === 'teal' ? 'text-teal-400' :
+                        inputGradient === 'gold' ? 'text-amber-400' :
+                        inputGradient === 'white' ? 'text-gray-600' :
+                        'text-blue-400'
                       )}>code</span>
                       <label className="flex items-center">
                         <input
@@ -1938,6 +1609,9 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Calendar */}
+
           <Button
             onClick={toggleCalendar}
             variant="gradient"

@@ -5,6 +5,13 @@ import clsx from 'clsx';
 import { cn } from '../utils/cn.jsx'; // Adjust the path based on your folder structure
 
 
+// default colors for input and button gradients
+const handleDefaultColors = () => {
+  setInputGradient('gold');
+  setButtonGradient('grey');
+};
+
+
 const ColourDropdown = ({ value, onChange, icon, inputGradient }) => {
   // Define color options (simplified to single colors for now, can be extended to gradients)
   const colorOptions = [

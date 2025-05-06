@@ -2,6 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* Center the number input and position spinners next to the text */
+.custom-number-input input[type="number"] {
+  text-align: center;
+  padding-right: 2rem; /* Space for spinners */
+}
+
+/* Style the up/down spinners to appear immediately after the centered text */
+.custom-number-input input[type="number"]::-webkit-inner-spin-button,
+.custom-number-input input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none; /* Remove default spinners */
+  appearance: none;
+  margin: 0;
+}
+
+/* Add custom spinners using pseudo-elements */
+.custom-number-input {
+  position: relative;
+}
+
+.custom-number-input input[type="number"] {
+  -moz-appearance: textfield; /* Remove default spinners in Firefox */
+}
+
+/* Custom up/down arrows */
+.custom-number-input::after,
+.custom-number-input::before {
+  content: '';
+  position: absolute;
+  right: 6rem; /* Adjust to position spinners closer to centered text */
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  pointer-events: none;
+}
+
+.custom-number-input::before {
+  top: 25%;
+  border-bottom: 5px solid #9ca3af; /* Gray-400 color */
+}
+
+.custom-number-input::after {
+  bottom: 25%;
+  border-top: 5px solid #9ca3af; /* Gray-400 color */
+}
+
 /* Set default cursor for all elements */
 * {
   cursor: default;

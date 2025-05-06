@@ -1,15 +1,8 @@
-
-// src/components/GradientColours.jsx
-
 import { cn } from '../utils/cn.jsx';
 
-// This file contains utility functions to generate gradient classes and styles
-// for Tailwind CSS based on simplified color names.
-// It includes functions for background gradients, text gradients, and shadow gradients.
-
+// Utility function to map simplified color names to Tailwind background gradient classes
 export const getGradientClass = (color, direction = 'to-r') => {
   const gradientMap = {
-
     yellow: `bg-gradient-${direction} from-gray-500 to-yellow-600`,
     purple: `bg-gradient-${direction} from-blue-600 to-purple-600`,
     cyan: `bg-gradient-${direction} from-green-500 to-cyan-600`,
@@ -21,15 +14,10 @@ export const getGradientClass = (color, direction = 'to-r') => {
     white: `bg-gradient-${direction} from-gray-300 to-gray-500`,
   };
 
-  return clsx(gradientMap[color] || `bg-gradient-${direction} from-blue-600 to-purple-600`);
+  return cn(gradientMap[color] || `bg-gradient-${direction} from-blue-600 to-purple-600`);
 };
 
 // Utility function to map simplified color names to Tailwind text gradient classes
-// This function generates a text gradient class based on the color provided.
-// The function uses the bg-clip-text and text-transparent classes to create a text gradient effect.
-// The color names are simplified for easier usage, and the function maps them to
-// specific Tailwind text gradient classes.
-
 export const getTextGradientClass = (color) => {
   const textGradientMap = {
     yellow: 'bg-gradient-to-r from-gray-300 to-yellow-500 bg-clip-text text-transparent',
@@ -43,13 +31,10 @@ export const getTextGradientClass = (color) => {
     white: 'bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent',
   };
 
-  return clsx(textGradientMap[color] || 'bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent');
+  return cn(textGradientMap[color] || 'bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent');
 };
 
 // Utility function to map simplified color names to boxShadow styles
-// This function generates a boxShadow style based on the color and hover state provided.
-// The function returns a string that can be used in inline styles.
-
 export const getShadowGradientStyle = (color, hover = false) => {
   const shadowMap = {
     yellow: hover
@@ -85,5 +70,3 @@ export const getShadowGradientStyle = (color, hover = false) => {
     ? '0 0 15px rgba(59, 130, 246, 0.7), 0 0 25px rgba(139, 92, 246, 0.7)'
     : '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.5)');
 };
-
-export default GradientColours;
