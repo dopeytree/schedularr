@@ -14,7 +14,7 @@ export const getGradientClass = (color, direction = 'to-r') => {
     white: `bg-gradient-${direction} from-gray-300 to-gray-500`,
   };
 
-  return cn(gradientMap[color] || `bg-gradient-${direction} from-blue-600 to-purple-600`);
+  return cn(gradientMap[color] || `bg-gradient-${direction} from-amber-900 to-yellow-600`);
 };
 
 // Utility function to map simplified color names to Tailwind text gradient classes

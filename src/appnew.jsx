@@ -10,7 +10,7 @@ import { getGradientClass, getTextGradientClass, getShadowGradientStyle } from '
 import { cn } from './utils/cn.jsx';
 
 // Version number for the app
-const VERSION = "v0.7";
+const VERSION = "v0.61";
 
 // Validate access token by attempting to fetch user info
 const validateAccessToken = async (accessToken) => {
@@ -18,9 +18,6 @@ const validateAccessToken = async (accessToken) => {
     const response = await fetch('https://www.googleapis.com/userinfo/v2/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (response.status === 401 || response.status === 403) {
-      return false; // Token is invalid or unauthorized
-    }
     return response.ok;
   } catch (err) {
     console.error('Token validation error:', err);
@@ -145,54 +142,29 @@ const shareSchedularrCalendar = async (calendarId, email, accessToken, onInvalid
   }
 };
 
-// Fetch shared users for a calendar with retry logic
-const fetchSharedUsers = async (calendarId, accessToken, onInvalidToken, retries = 3, delay = 1000) => {
-  // Helper function to delay execution
-  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const isValidToken = await validateAccessToken(accessToken);
-      if (!isValidToken) {
-        onInvalidToken();
-        return [];
-      }
-      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (response.status === 401 || response.status === 403) {
-        onInvalidToken();
-        return [];
-      }
-      if (response.status === 429 || response.status === 503) {
-        if (attempt === retries) {
-          throw new Error('Rate limit exceeded or service unavailable after retries');
-        }
-        await wait(delay * Math.pow(2, attempt - 1)); // Exponential backoff
-        continue;
-      }
-      if (!response.ok) {
-        throw new Error(`Failed to fetch shared users: HTTP ${response.status}`);
-      }
-      const data = await response.json();
-      const users = data.items
-        .filter(item => item.scope.type === 'user' && item.scope.value)
-        .map(item => item.scope.value)
-        .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@'));
-      // Cache users in localStorage
-      localStorage.setItem('sharedUsers', JSON.stringify(users));
-      return users;
-    } catch (err) {
-      console.error(`Fetch shared users error (attempt ${attempt}/${retries}):`, err);
-      if (attempt === retries) {
-        // Return cached users if available
-        const cachedUsers = localStorage.getItem('sharedUsers');
-        return cachedUsers ? JSON.parse(cachedUsers) : [];
-      }
-      await wait(delay * Math.pow(2, attempt - 1)); // Exponential backoff
+// Fetch shared users for a calendar
+const fetchSharedUsers = async (calendarId, accessToken, onInvalidToken) => {
+  try {
+    const isValidToken = await validateAccessToken(accessToken);
+    if (!isValidToken) {
+      onInvalidToken();
+      return [];
     }
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch shared users');
+    }
+    const data = await response.json();
+    return data.items
+      .filter(item => item.scope.type === 'user' && item.scope.value)
+      .map(item => item.scope.value)
+      .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@'));
+  } catch (err) {
+    console.error('Fetch shared users error:', err);
+    return [];
   }
-  return [];
 };
 
 // Shadcn UI Components with hover animations
@@ -384,14 +356,10 @@ const App = () => {
   const [showCustomCalendarInput, setShowCustomCalendarInput] = useState(false);
   const [showCalendarList, setShowCalendarList] = useState(false);
   const [calendarList, setCalendarList] = useState([]);
-  // Initialize sharedUsers from localStorage
-  const [sharedUsers, setSharedUsers] = useState(() => {
-    const cachedUsers = localStorage.getItem('sharedUsers');
-    return cachedUsers ? JSON.parse(cachedUsers) : [];
-  });
+  const [sharedUsers, setSharedUsers] = useState([]);
   const [shareEmail, setShareEmail] = useState('');
   const [inputGradient, setInputGradient] = useState(() => {
-    return localStorage.getItem('inputGradient') || 'gold';
+    return localStorage.getItem('inputGradient') || 'purple';
   });
   const [buttonGradient, setButtonGradient] = useState(() => {
     return localStorage.getItem('buttonGradient') || 'grey';
@@ -425,7 +393,6 @@ const App = () => {
   });
   const [showGuide, setShowGuide] = useState(false);
 
-  // Persist state to localStorage
   useEffect(() => {
     localStorage.setItem('isSignedIn', isSignedIn);
     localStorage.setItem('userEmail', userEmail);
@@ -439,8 +406,7 @@ const App = () => {
     localStorage.setItem('inputGradient', inputGradient);
     localStorage.setItem('buttonGradient', buttonGradient);
     localStorage.setItem('devMode', devMode);
-    localStorage.setItem('sharedUsers', JSON.stringify(sharedUsers));
-  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode, sharedUsers]);
+  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode]);
 
   // Handle logout due to invalid token
   const handleInvalidToken = () => {
@@ -448,7 +414,6 @@ const App = () => {
     handleLogout();
   };
 
-  // Fetch calendar list when signed in
   useEffect(() => {
     if (isSignedIn && accessToken) {
       fetchCalendarList(accessToken, handleInvalidToken).then(calendars => {
@@ -457,18 +422,16 @@ const App = () => {
     }
   }, [isSignedIn, accessToken]);
 
-  // Fetch shared users when calendarId or accessToken changes
   useEffect(() => {
-    if (calendarId && accessToken && isSignedIn) {
+    if (calendarId && accessToken) {
       fetchSharedUsers(calendarId, accessToken, handleInvalidToken).then(users => {
         setSharedUsers(users);
       });
-    } else if (!calendarId) {
-      setSharedUsers(JSON.parse(localStorage.getItem('sharedUsers') || '[]'));
+    } else {
+      setSharedUsers([]);
     }
-  }, [calendarId, accessToken, isSignedIn]);
+  }, [calendarId, accessToken]);
 
-  // Rocket animation
   useEffect(() => {
     let intervalId;
     if (!isSignedIn && isAnimating) {
@@ -777,7 +740,7 @@ const App = () => {
       const end = new Date(start.getTime() + durationMs);
       const calculatedEndDate = end.toISOString().split('T')[0];
       const calculatedEndTime = end.toTimeString().slice(0, 5);
-      setEndTime(calculatedEndTime);
+      set都在这里EndTime(calculatedEndTime);
       setEndDate(calculatedEndDate);
       const calculatedFee = parseFloat(event.duration) * hourlyRate;
       setCost(Math.round(calculatedFee));
@@ -941,7 +904,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <div className="gsi-material-button-content-wrapper">
               <div className="gsi-material-button-icon">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 peso9.5z"></path>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
@@ -1710,16 +1673,4 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             buttonGradient={buttonGradient}
           >
             <span className="material-icons mr-2 transition-transform duration-300 hover:scale-125 p-1">logout</span> Logout
-          </Button>
-          <div className="text-center mt-4">
-            <p className="text-[10px] text-gray-400 opacity-70">
-              <a href="https://ed-stone.co.uk" target="_blank" className="text-blue-400 hover:underline">- made by ed stone -</a>
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-export default App;
+          </

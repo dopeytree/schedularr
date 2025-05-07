@@ -10,32 +10,11 @@ import { getGradientClass, getTextGradientClass, getShadowGradientStyle } from '
 import { cn } from './utils/cn.jsx';
 
 // Version number for the app
-const VERSION = "v0.7";
-
-// Validate access token by attempting to fetch user info
-const validateAccessToken = async (accessToken) => {
-  try {
-    const response = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (response.status === 401 || response.status === 403) {
-      return false; // Token is invalid or unauthorized
-    }
-    return response.ok;
-  } catch (err) {
-    console.error('Token validation error:', err);
-    return false;
-  }
-};
+const VERSION = "v0.61";
 
 // Fetch user's calendar list
-const fetchCalendarList = async (accessToken, onInvalidToken) => {
+const fetchCalendarList = async (accessToken) => {
   try {
-    const isValidToken = await validateAccessToken(accessToken);
-    if (!isValidToken) {
-      onInvalidToken();
-      return [];
-    }
     const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -51,13 +30,8 @@ const fetchCalendarList = async (accessToken, onInvalidToken) => {
 };
 
 // Find existing Schedularr calendar
-const findSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', onInvalidToken) => {
+const findSchedularrCalendar = async (accessToken, calendarName = 'Schedularr') => {
   try {
-    const isValidToken = await validateAccessToken(accessToken);
-    if (!isValidToken) {
-      onInvalidToken();
-      return null;
-    }
     const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -74,21 +48,16 @@ const findSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', 
 };
 
 // Create new calendar with unique name
-const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', attempt = 0, onInvalidToken) => {
+const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', attempt = 0) => {
   try {
-    const isValidToken = await validateAccessToken(accessToken);
-    if (!isValidToken) {
-      onInvalidToken();
-      throw new Error('Invalid access token');
-    }
-    const existingId = await findSchedularrCalendar(accessToken, calendarName, onInvalidToken);
+    const existingId = await findSchedularrCalendar(accessToken, calendarName);
     if (existingId) {
       return existingId;
     }
     const uniqueName = attempt > 0 ? `${calendarName} ${attempt}` : calendarName;
-    const existingUniqueId = await findSchedularrCalendar(accessToken, uniqueName, onInvalidToken);
+    const existingUniqueId = await findSchedularrCalendar(accessToken, uniqueName);
     if (existingUniqueId) {
-      return createSchedularrCalendar(accessToken, calendarName, attempt + 1, onInvalidToken);
+      return createSchedularrCalendar(accessToken, calendarName, attempt + 1);
     }
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
       method: 'POST',
@@ -115,13 +84,8 @@ const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr'
 };
 
 // Share Schedularr calendar with an email
-const shareSchedularrCalendar = async (calendarId, email, accessToken, onInvalidToken) => {
+const shareSchedularrCalendar = async (calendarId, email, accessToken) => {
   try {
-    const isValidToken = await validateAccessToken(accessToken);
-    if (!isValidToken) {
-      onInvalidToken();
-      throw new Error('Invalid access token');
-    }
     const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
       method: 'POST',
       headers: {
@@ -145,54 +109,24 @@ const shareSchedularrCalendar = async (calendarId, email, accessToken, onInvalid
   }
 };
 
-// Fetch shared users for a calendar with retry logic
-const fetchSharedUsers = async (calendarId, accessToken, onInvalidToken, retries = 3, delay = 1000) => {
-  // Helper function to delay execution
-  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const isValidToken = await validateAccessToken(accessToken);
-      if (!isValidToken) {
-        onInvalidToken();
-        return [];
-      }
-      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (response.status === 401 || response.status === 403) {
-        onInvalidToken();
-        return [];
-      }
-      if (response.status === 429 || response.status === 503) {
-        if (attempt === retries) {
-          throw new Error('Rate limit exceeded or service unavailable after retries');
-        }
-        await wait(delay * Math.pow(2, attempt - 1)); // Exponential backoff
-        continue;
-      }
-      if (!response.ok) {
-        throw new Error(`Failed to fetch shared users: HTTP ${response.status}`);
-      }
-      const data = await response.json();
-      const users = data.items
-        .filter(item => item.scope.type === 'user' && item.scope.value)
-        .map(item => item.scope.value)
-        .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@'));
-      // Cache users in localStorage
-      localStorage.setItem('sharedUsers', JSON.stringify(users));
-      return users;
-    } catch (err) {
-      console.error(`Fetch shared users error (attempt ${attempt}/${retries}):`, err);
-      if (attempt === retries) {
-        // Return cached users if available
-        const cachedUsers = localStorage.getItem('sharedUsers');
-        return cachedUsers ? JSON.parse(cachedUsers) : [];
-      }
-      await wait(delay * Math.pow(2, attempt - 1)); // Exponential backoff
+// Fetch shared users for a calendar
+const fetchSharedUsers = async (calendarId, accessToken) => {
+  try {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch shared users');
     }
+    const data = await response.json();
+    return data.items
+      .filter(item => item.scope.type === 'user' && item.scope.value)
+      .map(item => item.scope.value)
+      .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@'));
+  } catch (err) {
+    console.error('Fetch shared users error:', err);
+    return [];
   }
-  return [];
 };
 
 // Shadcn UI Components with hover animations
@@ -384,11 +318,7 @@ const App = () => {
   const [showCustomCalendarInput, setShowCustomCalendarInput] = useState(false);
   const [showCalendarList, setShowCalendarList] = useState(false);
   const [calendarList, setCalendarList] = useState([]);
-  // Initialize sharedUsers from localStorage
-  const [sharedUsers, setSharedUsers] = useState(() => {
-    const cachedUsers = localStorage.getItem('sharedUsers');
-    return cachedUsers ? JSON.parse(cachedUsers) : [];
-  });
+  const [sharedUsers, setSharedUsers] = useState([]);
   const [shareEmail, setShareEmail] = useState('');
   const [inputGradient, setInputGradient] = useState(() => {
     return localStorage.getItem('inputGradient') || 'gold';
@@ -425,7 +355,6 @@ const App = () => {
   });
   const [showGuide, setShowGuide] = useState(false);
 
-  // Persist state to localStorage
   useEffect(() => {
     localStorage.setItem('isSignedIn', isSignedIn);
     localStorage.setItem('userEmail', userEmail);
@@ -439,36 +368,26 @@ const App = () => {
     localStorage.setItem('inputGradient', inputGradient);
     localStorage.setItem('buttonGradient', buttonGradient);
     localStorage.setItem('devMode', devMode);
-    localStorage.setItem('sharedUsers', JSON.stringify(sharedUsers));
-  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode, sharedUsers]);
+  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode]);
 
-  // Handle logout due to invalid token
-  const handleInvalidToken = () => {
-    setSubmissionError('Session expired. Please sign in again.');
-    handleLogout();
-  };
-
-  // Fetch calendar list when signed in
   useEffect(() => {
     if (isSignedIn && accessToken) {
-      fetchCalendarList(accessToken, handleInvalidToken).then(calendars => {
+      fetchCalendarList(accessToken).then(calendars => {
         setCalendarList(calendars);
       });
     }
   }, [isSignedIn, accessToken]);
 
-  // Fetch shared users when calendarId or accessToken changes
   useEffect(() => {
-    if (calendarId && accessToken && isSignedIn) {
-      fetchSharedUsers(calendarId, accessToken, handleInvalidToken).then(users => {
+    if (calendarId && accessToken) {
+      fetchSharedUsers(calendarId, accessToken).then(users => {
         setSharedUsers(users);
       });
-    } else if (!calendarId) {
-      setSharedUsers(JSON.parse(localStorage.getItem('sharedUsers') || '[]'));
+    } else {
+      setSharedUsers([]);
     }
-  }, [calendarId, accessToken, isSignedIn]);
+  }, [calendarId, accessToken]);
 
-  // Rocket animation
   useEffect(() => {
     let intervalId;
     if (!isSignedIn && isAnimating) {
@@ -618,7 +537,7 @@ const App = () => {
 
   useEffect(() => {
     if (isSignedIn && !calendarId && !devMode && accessToken) {
-      createSchedularrCalendar(accessToken, calendarName, 0, handleInvalidToken)
+      createSchedularrCalendar(accessToken, calendarName)
         .then(newId => {
           setCalendarId(newId);
           localStorage.setItem('calendarId', newId);
@@ -687,7 +606,7 @@ const App = () => {
       return;
     }
     try {
-      const newId = await createSchedularrCalendar(accessToken, customCalendarName, 0, handleInvalidToken);
+      const newId = await createSchedularrCalendar(accessToken, customCalendarName);
       setCalendarId(newId);
       setCalendarName(customCalendarName);
       localStorage.setItem('calendarId', newId);
@@ -742,10 +661,10 @@ const App = () => {
       return;
     }
     try {
-      await shareSchedularrCalendar(calendarId, shareEmail, accessToken, handleInvalidToken);
+      await shareSchedularrCalendar(calendarId, shareEmail, accessToken);
       setShareSuccess(`Calendar shared successfully with ${shareEmail}!`);
       setShareEmail('');
-      const updatedUsers = await fetchSharedUsers(calendarId, accessToken, handleInvalidToken);
+      const updatedUsers = await fetchSharedUsers(calendarId, accessToken);
       setSharedUsers(updatedUsers);
       setTimeout(() => {
         setShareSuccess('');
@@ -816,11 +735,6 @@ const App = () => {
     let apiResponse = 'N/A';
     if (errors.length === 0 || devMode) {
       try {
-        const isValidToken = await validateAccessToken(accessToken);
-        if (!isValidToken) {
-          handleInvalidToken();
-          return;
-        }
         const eventData = {
           summary: event.name || 'Test Event',
           description: `Duration: ${event.duration} hours\nFee: ${currency}${cost}${event.note ? `\nNote: ${event.note}` : ''}`,
@@ -941,7 +855,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <div className="gsi-material-button-content-wrapper">
               <div className="gsi-material-button-icon">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 peso9.5z"></path>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
@@ -1164,6 +1078,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       </div>
                     </div>
 
+                    
                     <div className="flex items-center">
                       <Tooltip message="[auto] Currency & Fee 💰/🍰" position="bottom">
                         <span className={cn(
@@ -1190,18 +1105,24 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           onClick={() => setActiveTab('settings')}
                         />
                         <div className="relative w-4/5">
-                          <Input
-                            type="text"
-                            value={cost || ''}
-                            readOnly
-                            className={cn("pr-12 cursor-pointer", cost ? 'text-white' : 'text-gray-400')}
-                            inputGradient={inputGradient}
-                            onClick={() => setActiveTab('settings')}
-                          />
-                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">fee</span>
+                          
+                            <Input
+                              type="text"
+                              value={cost || ''}
+                              readOnly
+                              className={cn("pr-12 cursor-pointer", cost ? 'text-white' : 'text-gray-400')}
+                              inputGradient={inputGradient}
+                              onClick={() => setActiveTab('settings')}
+                            />
+                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">fee</span>
+                         
                         </div>
                       </div>
                     </div>
+
+                    
+
+                    {/* Notes */}
 
                     <Divider inputGradient={inputGradient} label="Notes" />
 
@@ -1249,6 +1170,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                 </CardContent>
               </Card>
             </TabsContent>
+
+{/* Admin tab */}
 
             <TabsContent tabValue="settings" value={activeTab}>
               <Card className="w-full max-w-[400px] mx-auto">
@@ -1309,161 +1232,165 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       />
                     </div>
 
-                    <Divider inputGradient={inputGradient} label="Calendar & Sharing" />
+ {/* Calendar lists */}
 
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === 'yellow' ? 'text-yellow-400' :
-                        inputGradient === 'purple' ? 'text-blue-400' :
-                        inputGradient === 'cyan' ? 'text-green-400' :
-                        inputGradient === 'grey' ? 'text-gray-400' :
-                        inputGradient === 'orange' ? 'text-red-400' :
-                        inputGradient === 'pink' ? 'text-pink-400' :
-                        inputGradient === 'teal' ? 'text-teal-400' :
-                        inputGradient === 'gold' ? 'text-amber-400' :
-                        inputGradient === 'white' ? 'text-gray-600' :
-                        'text-blue-400'
-                      )}>calendar_today</span>
-                      {calendarId ? (
-                        <div className="flex items-center gap-x-4">
-                          <p className="text-white cursor-pointer hover:underline" onClick={openCalendarLink}>{calendarName}</p>
-                          <Button
-                            variant="text"
-                            className={cn(
-                              "text-sm",
-                              inputGradient === 'yellow' ? 'text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500' :
-                              inputGradient === 'cyan' ? 'text-green-400 hover:text-green-300 focus:ring-green-500' :
-                              inputGradient === 'grey' ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500' :
-                              inputGradient === 'orange' ? 'text-red-400 hover:text-red-300 focus:ring-red-500' :
-                              inputGradient === 'pink' ? 'text-pink-400 hover:text-pink-300 focus:ring-pink-500' :
-                              inputGradient === 'teal' ? 'text-teal-400 hover:text-teal-300 focus:ring-teal-500' :
-                              inputGradient === 'gold' ? 'text-amber-400 hover:text-amber-300 focus:ring-amber-500' :
-                              inputGradient === 'white' ? 'text-gray-600 hover:text-gray-500 focus:ring-gray-400' :
-                              'text-blue-400 hover:text-blue-300 focus:ring-blue-500'
-                            )}
-                            onClick={() => {
-                              setShowCalendarList(true);
-                              setShowCustomCalendarInput(false);
-                            }}
-                            buttonGradient={buttonGradient}
-                          >
-                            Choose
-                          </Button>
-                          <Button
-                            variant="text"
-                            className={cn(
-                              "text-sm",
-                              inputGradient === 'yellow' ? 'text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500' :
-                              inputGradient === 'cyan' ? 'text-green-400 hover:text-green-300 focus:ring-green-500' :
-                              inputGradient === 'grey' ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500' :
-                              inputGradient === 'orange' ? 'text-red-400 hover:text-red-300 focus:ring-red-500' :
-                              inputGradient === 'pink' ? 'text-pink-400 hover:text-pink-300 focus:ring-pink-500' :
-                              inputGradient === 'teal' ? 'text-teal-400 hover:text-teal-300 focus:ring-teal-500' :
-                              inputGradient === 'gold' ? 'text-amber-400 hover:text-amber-300 focus:ring-amber-500' :
-                              inputGradient === 'white' ? 'text-gray-600 hover:text-gray-500 focus:ring-gray-400' :
-                              'text-blue-400 hover:text-blue-300 focus:ring-blue-500'
-                            )}
-                            onClick={() => {
-                              setShowCustomCalendarInput(true);
-                              setShowCalendarList(false);
-                            }}
-                            buttonGradient={buttonGradient}
-                          >
-                            New Custom
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="w-full">
-                          <Button
-                            variant="gradient"
-                            onClick={() => createSchedularrCalendar(accessToken, calendarName, 0, handleInvalidToken)
-                              .then(id => {
-                                setCalendarId(id);
-                                localStorage.setItem('calendarId', id);
-                                setSubmissionOutput(`${calendarName} calendar found or created successfully!`);
-                              })
-                              .catch(err => setSubmissionError(err.message))
-                            }
-                            className="mb-2 w-full"
-                            buttonGradient={buttonGradient}
-                          >
-                            Create {calendarName} Calendar
-                          </Button>
-                          <p className="text-sm text-gray-400 mb-2">Or enter an existing Calendar ID:</p>
-                          <Textarea
-                            value={calendarId}
-                            onChange={handleCalendarIdChange}
-                            placeholder="e.g - abc123@group.calendar.google.com"
-                            rows="2"
-                            inputGradient={inputGradient}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    {showCustomCalendarInput && (
-                      <div className="flex items-center mt-4">
-                        <span className={cn(
-                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === 'yellow' ? 'text-yellow-400' :
-                          inputGradient === 'purple' ? 'text-blue-400' :
-                          inputGradient === 'cyan' ? 'text-green-400' :
-                          inputGradient === 'grey' ? 'text-gray-400' :
-                          inputGradient === 'orange' ? 'text-red-400' :
-                          inputGradient === 'pink' ? 'text-pink-400' :
-                          inputGradient === 'teal' ? 'text-teal-400' :
-                          inputGradient === 'gold' ? 'text-amber-400' :
-                          inputGradient === 'white' ? 'text-gray-600' :
-                          'text-blue-400'
-                        )}>calendar_today</span>
-                        <div className="w-full flex items-center gap-2">
-                          <Input
-                            value={customCalendarName}
-                            onChange={handleCustomCalendarNameChange}
-                            placeholder="Custom Calendar Name"
-                            inputGradient={inputGradient}
-                            className="flex-1"
-                          />
-                          <Button
-                            variant="gradient"
-                            onClick={handleCreateCustomCalendar}
-                            className="py-2 px-4 text-lg font-semibold"
-                            buttonGradient={buttonGradient}
-                          >
-                            Create
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    {showCalendarList && (
-                      <div className="flex items-center mt-4">
-                        <span className={cn(
-                          "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                          inputGradient === 'yellow' ? 'text-yellow-400' :
-                          inputGradient === 'purple' ? 'text-blue-400' :
-                          inputGradient === 'cyan' ? 'text-green-400' :
-                          inputGradient === 'grey' ? 'text-gray-400' :
-                          inputGradient === 'orange' ? 'text-red-400' :
-                          inputGradient === 'pink' ? 'text-pink-400' :
-                          inputGradient === 'teal' ? 'text-teal-400' :
-                          inputGradient === 'gold' ? 'text-amber-400' :
-                          inputGradient === 'white' ? 'text-gray-600' :
-                          'text-blue-400'
-                        )}>calendar_today</span>
-                        <select
-                          onChange={(e) => {
-                            const selectedCalendar = calendarList.find(cal => cal.id === e.target.value);
-                            if (selectedCalendar) handleCalendarSelect(selectedCalendar);
-                          }}
-                          className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
-                        >
-                          <option value="">Select a calendar...</option>
-                          {calendarList.map(calendar => (
-                            <option key={calendar.id} value={calendar.id}>{calendar.summary}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+ <Divider inputGradient={inputGradient} label="Calendar & Sharing" />
+
+               <div className="flex items-center">
+  <span className={cn(
+    "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+    inputGradient === 'yellow' ? 'text-yellow-400' :
+    inputGradient === 'purple' ? 'text-blue-400' :
+    inputGradient === 'cyan' ? 'text-green-400' :
+    inputGradient === 'grey' ? 'text-gray-400' :
+    inputGradient === 'orange' ? 'text-red-400' :
+    inputGradient === 'pink' ? 'text-pink-400' :
+    inputGradient === 'teal' ? 'text-teal-400' :
+    inputGradient === 'gold' ? 'text-amber-400' :
+    inputGradient === 'white' ? 'text-gray-600' :
+    'text-blue-400'
+  )}>calendar_today</span>
+  {calendarId ? (
+    <div className="flex items-center gap-x-4">
+      <p className="text-white cursor-pointer hover:underline" onClick={openCalendarLink}>{calendarName}</p>
+      <Button
+        variant="text"
+        className={cn(
+          "text-sm",
+          inputGradient === 'yellow' ? 'text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500' :
+          inputGradient === 'cyan' ? 'text-green-400 hover:text-green-300 focus:ring-green-500' :
+          inputGradient === 'grey' ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500' :
+          inputGradient === 'orange' ? 'text-red-400 hover:text-red-300 focus:ring-red-500' :
+          inputGradient === 'pink' ? 'text-pink-400 hover:text-pink-300 focus:ring-pink-500' :
+          inputGradient === 'teal' ? 'text-teal-400 hover:text-teal-300 focus:ring-teal-500' :
+          inputGradient === 'gold' ? 'text-amber-400 hover:text-amber-300 focus:ring-amber-500' :
+          inputGradient === 'white' ? 'text-gray-600 hover:text-gray-500 focus:ring-gray-400' :
+          'text-blue-400 hover:text-blue-300 focus:ring-blue-500'
+        )}
+        onClick={() => {
+          setShowCalendarList(true);
+          setShowCustomCalendarInput(false); // Close custom calendar input when choosing existing calendar
+        }}
+        buttonGradient={buttonGradient}
+      >
+        Choose
+      </Button>
+      <Button
+        variant="text"
+        className={cn(
+          "text-sm",
+          inputGradient === 'yellow' ? 'text-yellow-400 hover:text-yellow-300 focus:ring-yellow-500' :
+          inputGradient === 'cyan' ? 'text-green-400 hover:text-green-300 focus:ring-green-500' :
+          inputGradient === 'grey' ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500' :
+          inputGradient === 'orange' ? 'text-red-400 hover:text-red-300 focus:ring-red-500' :
+          inputGradient === 'pink' ? 'text-pink-400 hover:text-pink-300 focus:ring-pink-500' :
+          inputGradient === 'teal' ? 'text-teal-400 hover:text-teal-300 focus:ring-teal-500' :
+          inputGradient === 'gold' ? 'text-amber-400 hover:text-amber-300 focus:ring-amber-500' :
+          inputGradient === 'white' ? 'text-gray-600 hover:text-gray-500 focus:ring-gray-400' :
+          'text-blue-400 hover:text-blue-300 focus:ring-blue-500'
+        )}
+        onClick={() => {
+          setShowCustomCalendarInput(true);
+          setShowCalendarList(false); // Close calendar list when opening custom input
+        }}
+        buttonGradient={buttonGradient}
+      >
+        New Custom
+      </Button>
+    </div>
+  ) : (
+    <div className="w-full">
+      <Button
+        variant="gradient"
+        onClick={() => createSchedularrCalendar(accessToken, calendarName)
+          .then(id => {
+            setCalendarId(id);
+            localStorage.setItem('calendarId', id);
+            setSubmissionOutput(`${calendarName} calendar found or created successfully!`);
+          })
+          .catch(err => setSubmissionError(err.message))
+        }
+        className="mb-2 w-full"
+        buttonGradient={buttonGradient}
+      >
+        Create {calendarName} Calendar
+      </Button>
+      <p className="text-sm text-gray-400 mb-2">Or enter an existing Calendar ID:</p>
+      <Textarea
+        value={calendarId}
+        onChange={handleCalendarIdChange}
+        placeholder="e.g - abc123@group.calendar.google.com"
+        rows="2"
+        inputGradient={inputGradient}
+      />
+    </div>
+  )}
+</div>
+{showCustomCalendarInput && (
+  <div className="flex items-center mt-4">
+    <span className={cn(
+      "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+      inputGradient === 'yellow' ? 'text-yellow-400' :
+      inputGradient === 'purple' ? 'text-blue-400' :
+      inputGradient === 'cyan' ? 'text-green-400' :
+      inputGradient === 'grey' ? 'text-gray-400' :
+      inputGradient === 'orange' ? 'text-red-400' :
+      inputGradient === 'pink' ? 'text-pink-400' :
+      inputGradient === 'teal' ? 'text-teal-400' :
+      inputGradient === 'gold' ? 'text-amber-400' :
+      inputGradient === 'white' ? 'text-gray-600' :
+      'text-blue-400'
+    )}>calendar_today</span>
+    <div className="w-full flex items-center gap-2">
+      <Input
+        value={customCalendarName}
+        onChange={handleCustomCalendarNameChange}
+        placeholder="Custom Calendar Name"
+        inputGradient={inputGradient}
+        className="flex-1"
+      />
+      <Button
+        variant="gradient"
+        onClick={handleCreateCustomCalendar}
+        className="py-2 px-4 text-lg font-semibold"
+        buttonGradient={buttonGradient}
+      >
+        Create
+      </Button>
+    </div>
+  </div>
+)}
+{showCalendarList && (
+  <div className="flex items-center mt-4">
+    <span className={cn(
+      "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+      inputGradient === 'yellow' ? 'text-yellow-400' :
+      inputGradient === 'purple' ? 'text-blue-400' :
+      inputGradient === 'cyan' ? 'text-green-400' :
+      inputGradient === 'grey' ? 'text-gray-400' :
+      inputGradient === 'orange' ? 'text-red-400' :
+      inputGradient === 'pink' ? 'text-pink-400' :
+      inputGradient === 'teal' ? 'text-teal-400' :
+      inputGradient === 'gold' ? 'text-amber-400' :
+      inputGradient === 'white' ? 'text-gray-600' :
+      'text-blue-400'
+    )}>calendar_today</span>
+    <select
+      onChange={(e) => {
+        const selectedCalendar = calendarList.find(cal => cal.id === e.target.value);
+        if (selectedCalendar) handleCalendarSelect(selectedCalendar);
+      }}
+      className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
+    >
+      <option value="">Select a calendar...</option>
+      {calendarList.map(calendar => (
+        <option key={calendar.id} value={calendar.id}>{calendar.summary}</option>
+      ))}
+    </select>
+  </div>
+)}
+
+                    {/* Invite email / list of shared with users */}
 
                     <div className="flex items-center">
                       <span className={cn(
@@ -1549,63 +1476,68 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       </Alert>
                     )}
 
+            {/* Hourly Rate & Currency inputs */}
+
                     <Divider inputGradient={inputGradient} label="Hourly Rate & Currency" />
 
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === 'yellow' ? 'text-yellow-400' :
-                        inputGradient === 'purple' ? 'text-blue-400' :
-                        inputGradient === 'cyan' ? 'text-green-400' :
-                        inputGradient === 'grey' ? 'text-gray-400' :
-                        inputGradient === 'orange' ? 'text-red-400' :
-                        inputGradient === 'pink' ? 'text-pink-400' :
-                        inputGradient === 'teal' ? 'text-teal-400' :
-                        inputGradient === 'gold' ? 'text-amber-400' :
-                        inputGradient === 'white' ? 'text-gray-600' :
-                        'text-blue-400'
-                      )}>account_balance_wallet</span>
-                      <div className="relative w-full">
-                        <Input
-                          type="number"
-                          value={hourlyRate}
-                          onChange={handleHourlyRateChange}
-                          placeholder="Fee per unit"
-                          step="1"
-                          min="0"
-                          className="pl-10 pr-12 text-center custom-number-input"
-                          inputGradient={inputGradient}
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">/ hr</span>
-                      </div>
-                    </div>
+  <div className="flex items-center">
+  <span className={cn(
+    "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+    inputGradient === 'yellow' ? 'text-yellow-400' :
+    inputGradient === 'purple' ? 'text-blue-400' :
+    inputGradient === 'cyan' ? 'text-green-400' :
+    inputGradient === 'grey' ? 'text-gray-400' :
+    inputGradient === 'orange' ? 'text-red-400' :
+    inputGradient === 'pink' ? 'text-pink-400' :
+    inputGradient === 'teal' ? 'text-teal-400' :
+    inputGradient === 'gold' ? 'text-amber-400' :
+    inputGradient === 'white' ? 'text-gray-600' :
+    'text-blue-400'
+  )}>account_balance_wallet</span>
+  <div className="relative w-full">
+    
+    <Input
+      type="number"
+      value={hourlyRate}
+      onChange={handleHourlyRateChange}
+      placeholder="Fee per unit"
+      step="1"
+      min="0"
+      className="pl-10 pr-12 text-center custom-number-input"
+      inputGradient={inputGradient}
+    />
+    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">/ hr</span>
+  </div>
+</div>
 
-                    <div className="flex items-center">
-                      <span className={cn(
-                        "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
-                        inputGradient === 'yellow' ? 'text-yellow-400' :
-                        inputGradient === 'purple' ? 'text-blue-400' :
-                        inputGradient === 'cyan' ? 'text-green-400' :
-                        inputGradient === 'grey' ? 'text-gray-400' :
-                        inputGradient === 'orange' ? 'text-red-400' :
-                        inputGradient === 'pink' ? 'text-pink-400' :
-                        inputGradient === 'teal' ? 'text-teal-400' :
-                        inputGradient === 'gold' ? 'text-amber-400' :
-                        inputGradient === 'white' ? 'text-gray-600' :
-                        'text-blue-400'
-                      )}>currency_exchange</span>
-                      <div className="relative w-full">
-                        <Input
-                          value={currency}
-                          onChange={handleCurrencyChange}
-                          placeholder="Currency"
-                          maxLength="3"
-                          inputGradient={inputGradient}
-                          className="pl-10 pr-12 text-center"
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">£ $ 🍺</span>
-                      </div>
-                    </div>
+<div className="flex items-center">
+  <span className={cn(
+    "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
+    inputGradient === 'yellow' ? 'text-yellow-400' :
+    inputGradient === 'purple' ? 'text-blue-400' :
+    inputGradient === 'cyan' ? 'text-green-400' :
+    inputGradient === 'grey' ? 'text-gray-400' :
+    inputGradient === 'orange' ? 'text-red-400' :
+    inputGradient === 'pink' ? 'text-pink-400' :
+    inputGradient === 'teal' ? 'text-teal-400' :
+    inputGradient === 'gold' ? 'text-amber-400' :
+    inputGradient === 'white' ? 'text-gray-600' :
+    'text-blue-400'
+  )}>currency_exchange</span>
+  <div className="relative w-full">
+    <Input
+      value={currency}
+      onChange={handleCurrencyChange}
+      placeholder="Currency"
+      maxLength="3"
+      inputGradient={inputGradient}
+      className="pl-10 pr-12 text-center"
+    />
+    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">£ $ 🍺</span>
+  </div>
+</div>
+
+                {/* Colour Pickers */}
 
                     <Divider inputGradient={inputGradient} label="Colour Themes" />
                     <ColourDropdown
@@ -1644,7 +1576,9 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       </Button>
                     </div>
 
-                    <Divider inputGradient={inputGradient} label="<Dev> Mode" />
+                  {/* Dev Mode */}
+
+                  <Divider inputGradient={inputGradient} label="<Dev> Mode" />
 
                     <div className="flex items-center">
                       <span className={cn(
@@ -1675,6 +1609,8 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Calendar */}
 
           <Button
             onClick={toggleCalendar}
