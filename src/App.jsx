@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
+import DOMPurify from 'dompurify';
+import isEmail from 'validator/lib/isEmail';
 import logo from './assets/logo.svg';
 import { emojiBlast } from "emoji-blast";
 import RandomEnding from './components/Extra/RandomEnding.jsx';
@@ -12,6 +14,9 @@ import { cn } from './utils/cn.jsx';
 // Version number for the app
 const VERSION = "v0.7";
 
+// Sanitize input to prevent XSS
+const sanitize = (input) => DOMPurify.sanitize(input);
+
 // Validate access token by attempting to fetch user info
 const validateAccessToken = async (accessToken) => {
   try {
@@ -23,7 +28,9 @@ const validateAccessToken = async (accessToken) => {
     }
     return response.ok;
   } catch (err) {
-    console.error('Token validation error:', err);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Token validation error:', err);
+    }
     return false;
   }
 };
@@ -39,13 +46,19 @@ const fetchCalendarList = async (accessToken, onInvalidToken) => {
     const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+    if (response.status === 401 || response.status === 403) {
+      onInvalidToken();
+      return [];
+    }
     if (!response.ok) {
-      throw new Error('Failed to fetch calendar list');
+      throw new Error(`Failed to fetch calendar list: HTTP ${response.status}`);
     }
     const data = await response.json();
-    return data.items;
+    return data.items || [];
   } catch (err) {
-    console.error('Calendar list fetch error:', err);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Calendar list fetch error:', err);
+    }
     return [];
   }
 };
@@ -61,14 +74,20 @@ const findSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', 
     const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+    if (response.status === 401 || response.status === 403) {
+      onInvalidToken();
+      return null;
+    }
     if (!response.ok) {
-      throw new Error('Failed to fetch calendar list');
+      throw new Error(`Failed to fetch calendar list: HTTP ${response.status}`);
     }
     const data = await response.json();
     const schedularrCalendar = data.items.find(cal => cal.summary === calendarName);
     return schedularrCalendar ? schedularrCalendar.id : null;
   } catch (err) {
-    console.error('Calendar list error:', err);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Calendar list error:', err);
+    }
     return null;
   }
 };
@@ -97,20 +116,28 @@ const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr'
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        summary: uniqueName,
-        description: `Calendar for ${uniqueName} bookings`,
+        summary: sanitize(uniqueName),
+        description: `Calendar for ${sanitize(uniqueName)} bookings`,
         timeZone: 'UTC',
       }),
     });
+    if (response.status === 401 || response.status === 403) {
+      onInvalidToken();
+      throw new Error('Invalid access token');
+    }
     if (!response.ok) {
-      throw new Error('Failed to create calendar');
+      throw new Error(`Failed to create calendar: HTTP ${response.status}`);
     }
     const data = await response.json();
-    console.log('Created calendar:', data);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Created calendar:', data);
+    }
     return data.id;
   } catch (err) {
-    console.error('Calendar creation error:', err);
-    throw new Error(`Failed to create calendar: ${err.message}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Calendar creation error:', err);
+    }
+    throw new Error(`Failed to create calendar: ${sanitize(err.message)}`);
   }
 };
 
@@ -122,7 +149,7 @@ const shareSchedularrCalendar = async (calendarId, email, accessToken, onInvalid
       onInvalidToken();
       throw new Error('Invalid access token');
     }
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(sanitize(calendarId))}/acl`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -130,45 +157,52 @@ const shareSchedularrCalendar = async (calendarId, email, accessToken, onInvalid
       },
       body: JSON.stringify({
         role: 'writer',
-        scope: { type: 'user', value: email },
+        scope: { type: 'user', value: sanitize(email) },
       }),
     });
+    if (response.status === 401 || response.status === 403) {
+      onInvalidToken();
+      throw new Error('Invalid access token');
+    }
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Share calendar error response:', errorData);
-      throw new Error(`Failed to share calendar: ${errorData.error.message}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Share calendar error response:', errorData);
+      }
+      throw new Error(`Failed to share calendar: ${sanitize(errorData.error.message)}`);
     }
     return true;
   } catch (err) {
-    console.error('Calendar sharing error:', err);
-    throw new Error(`Failed to share calendar: ${err.message}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Calendar sharing error:', err);
+    }
+    throw new Error(`Failed to share calendar: ${sanitize(err.message)}`);
   }
 };
 
 // Fetch shared users for a calendar with retry logic
 const fetchSharedUsers = async (calendarId, accessToken, onInvalidToken, retries = 3, delay = 1000) => {
-  // Helper function to delay execution
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const isValidToken = await validateAccessToken(accessToken);
       if (!isValidToken) {
         onInvalidToken();
-        return [];
+        return JSON.parse(localStorage.getItem('sharedUsers') || '[]');
       }
-      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl`, {
+      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(sanitize(calendarId))}/acl`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (response.status === 401 || response.status === 403) {
         onInvalidToken();
-        return [];
+        return JSON.parse(localStorage.getItem('sharedUsers') || '[]');
       }
       if (response.status === 429 || response.status === 503) {
         if (attempt === retries) {
-          throw new Error('Rate limit exceeded or service unavailable after retries');
+          setSubmissionError('API rate limit exceeded or service unavailable. Using cached data.');
+          return JSON.parse(localStorage.getItem('sharedUsers') || '[]');
         }
-        await wait(delay * Math.pow(2, attempt - 1)); // Exponential backoff
+        await wait(delay * Math.pow(2, attempt - 1));
         continue;
       }
       if (!response.ok) {
@@ -176,23 +210,27 @@ const fetchSharedUsers = async (calendarId, accessToken, onInvalidToken, retries
       }
       const data = await response.json();
       const users = data.items
-        .filter(item => item.scope.type === 'user' && item.scope.value)
-        .map(item => item.scope.value)
-        .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50 && value.includes('@'));
-      // Cache users in localStorage
-      localStorage.setItem('sharedUsers', JSON.stringify(users));
+        .filter(item => item.scope.type === 'user' && item.scope.value && isEmail(item.scope.value))
+        .map(item => sanitize(item.scope.value))
+        .filter(value => !value.endsWith('@group.calendar.google.com') && value.length < 50);
+      localStorage.setItem('sharedUsers', JSON.stringify({ users, timestamp: Date.now() }));
       return users;
     } catch (err) {
-      console.error(`Fetch shared users error (attempt ${attempt}/${retries}):`, err);
-      if (attempt === retries) {
-        // Return cached users if available
-        const cachedUsers = localStorage.getItem('sharedUsers');
-        return cachedUsers ? JSON.parse(cachedUsers) : [];
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(`Fetch shared users error (attempt ${attempt}/${retries}):`, err);
       }
-      await wait(delay * Math.pow(2, attempt - 1)); // Exponential backoff
+      if (attempt === retries) {
+        const cached = JSON.parse(localStorage.getItem('sharedUsers') || '{}');
+        if (cached.timestamp && Date.now() - cached.timestamp > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem('sharedUsers');
+          return [];
+        }
+        return cached.users || [];
+      }
+      await wait(delay * Math.pow(2, attempt - 1));
     }
   }
-  return [];
+  return JSON.parse(localStorage.getItem('sharedUsers') || '[]');
 };
 
 // Shadcn UI Components with hover animations
@@ -302,21 +340,31 @@ const Alert = ({ className, variant = "default", inputGradient, onDismiss, ...pr
 const Tabs = ({ value, onValueChange, children }) => {
   return (
     <div>
-      {React.Children.map(children, child =>
-        React.cloneElement(child, { value, onValueChange })
-      )}
+      {React.Children.map(children, child => {
+        if (child.type === TabsList) {
+          return React.cloneElement(child, { value, onValueChange });
+        }
+        return React.cloneElement(child, { value });
+      })}
     </div>
   );
 };
 
-const TabsList = ({ className, ...props }) => (
+const TabsList = ({ className, value, onValueChange, ...props }) => (
   <div
     className={cn(
       "flex bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700 shadow-lg w-full max-w-[400px] mx-auto",
       className
     )}
     {...props}
-  />
+  >
+    {React.Children.map(props.children, child => {
+      if (child.type === TabsTrigger) {
+        return React.cloneElement(child, { value, onValueChange });
+      }
+      return child;
+    })}
+  </div>
 );
 
 const TabsTrigger = ({ value, onValueChange, tabValue, className, variant = "gradient", buttonGradient, ...props }) => {
@@ -384,10 +432,13 @@ const App = () => {
   const [showCustomCalendarInput, setShowCustomCalendarInput] = useState(false);
   const [showCalendarList, setShowCalendarList] = useState(false);
   const [calendarList, setCalendarList] = useState([]);
-  // Initialize sharedUsers from localStorage
   const [sharedUsers, setSharedUsers] = useState(() => {
-    const cachedUsers = localStorage.getItem('sharedUsers');
-    return cachedUsers ? JSON.parse(cachedUsers) : [];
+    const cached = JSON.parse(localStorage.getItem('sharedUsers') || '{}');
+    if (cached.timestamp && Date.now() - cached.timestamp > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem('sharedUsers');
+      return [];
+    }
+    return cached.users || [];
   });
   const [shareEmail, setShareEmail] = useState('');
   const [inputGradient, setInputGradient] = useState(() => {
@@ -411,26 +462,17 @@ const App = () => {
   const [isSignedIn, setIsSignedIn] = useState(() => {
     return localStorage.getItem('isSignedIn') === 'true';
   });
-  const [userEmail, setUserEmail] = useState(() => {
-    return localStorage.getItem('userEmail') || '';
-  });
-  const [userName, setUserName] = useState(() => {
-    return localStorage.getItem('userName') || '';
-  });
-  const [accessToken, setAccessToken] = useState(() => {
-    return localStorage.getItem('accessToken') || '';
-  });
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
+  const [accessToken, setAccessToken] = useState('');
   const [devMode, setDevMode] = useState(() => {
     return localStorage.getItem('devMode') === 'true';
   });
   const [showGuide, setShowGuide] = useState(false);
 
-  // Persist state to localStorage
+  // Persist non-sensitive state to localStorage
   useEffect(() => {
     localStorage.setItem('isSignedIn', isSignedIn);
-    localStorage.setItem('userEmail', userEmail);
-    localStorage.setItem('userName', userName);
-    localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('hourlyRate', hourlyRate);
     localStorage.setItem('currency', currency);
     localStorage.setItem('appTitle', appTitle);
@@ -439,16 +481,14 @@ const App = () => {
     localStorage.setItem('inputGradient', inputGradient);
     localStorage.setItem('buttonGradient', buttonGradient);
     localStorage.setItem('devMode', devMode);
-    localStorage.setItem('sharedUsers', JSON.stringify(sharedUsers));
-  }, [isSignedIn, userEmail, userName, accessToken, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode, sharedUsers]);
+    localStorage.setItem('sharedUsers', JSON.stringify({ users: sharedUsers, timestamp: Date.now() }));
+  }, [isSignedIn, hourlyRate, currency, appTitle, calendarId, calendarName, inputGradient, buttonGradient, devMode, sharedUsers]);
 
-  // Handle logout due to invalid token
   const handleInvalidToken = () => {
     setSubmissionError('Session expired. Please sign in again.');
     handleLogout();
   };
 
-  // Fetch calendar list when signed in
   useEffect(() => {
     if (isSignedIn && accessToken) {
       fetchCalendarList(accessToken, handleInvalidToken).then(calendars => {
@@ -457,18 +497,22 @@ const App = () => {
     }
   }, [isSignedIn, accessToken]);
 
-  // Fetch shared users when calendarId or accessToken changes
   useEffect(() => {
     if (calendarId && accessToken && isSignedIn) {
       fetchSharedUsers(calendarId, accessToken, handleInvalidToken).then(users => {
         setSharedUsers(users);
       });
     } else if (!calendarId) {
-      setSharedUsers(JSON.parse(localStorage.getItem('sharedUsers') || '[]'));
+      const cached = JSON.parse(localStorage.getItem('sharedUsers') || '{}');
+      if (cached.timestamp && Date.now() - cached.timestamp > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem('sharedUsers');
+        setSharedUsers([]);
+      } else {
+        setSharedUsers(cached.users || []);
+      }
     }
   }, [calendarId, accessToken, isSignedIn]);
 
-  // Rocket animation
   useEffect(() => {
     let intervalId;
     if (!isSignedIn && isAnimating) {
@@ -481,17 +525,11 @@ const App = () => {
             physics: {
               fontSize: 45,
               gravity: 0,
-              initialVelocities: {
-                x: 12,
-                y: -10
-              },
+              initialVelocities: { x: 12, y: -10 },
               rotation: 0,
               rotationDeceleration: 0
             },
-            position: {
-              x: 150,
-              y: blastYPos
-            }
+            position: { x: 150, y: blastYPos }
           });
         };
         const clouds = () => {
@@ -501,17 +539,11 @@ const App = () => {
             physics: {
               fontSize: { max: 50, min: 38 },
               gravity: 0.1,
-              initialVelocities: {
-                x: { max: 7, min: -7 },
-                y: { max: -2, min: -5 }
-              },
+              initialVelocities: { x: { max: 7, min: -7 }, y: { max: -2, min: -5 } },
               rotation: 0,
               rotationDeceleration: 0
             },
-            position: {
-              x: 150,
-              y: blastYPos
-            }
+            position: { x: 150, y: blastYPos }
           });
         };
         const sparkles = () => {
@@ -521,15 +553,9 @@ const App = () => {
             physics: {
               fontSize: { max: 30, min: 10 },
               gravity: 0.2,
-              initialVelocities: {
-                x: { max: 20, min: -15 },
-                y: { max: 20, min: -15 }
-              },
+              initialVelocities: { x: { max: 20, min: -15 }, y: { max: 20, min: -15 } },
             },
-            position: {
-              x: 200,
-              y: blastYPos - 60
-            }
+            position: { x: 200, y: blastYPos - 60 }
           });
         };
         rocket();
@@ -540,9 +566,7 @@ const App = () => {
       intervalId = setInterval(animate, 2000);
     }
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
   }, [isSignedIn, isAnimating]);
 
@@ -550,38 +574,45 @@ const App = () => {
     setIsAnimating(false);
     if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
       setSubmissionError('Google Identity Services not loaded. Please check your network and try again.');
-      console.error('Google Identity Services script not loaded.');
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Google Identity Services script not loaded.');
+      }
       return;
     }
+    const state = Math.random().toString(36).substring(2);
     const tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+      state,
       callback: (response) => {
-        if (response.error) {
-          setSubmissionError(`Google sign-in failed: ${response.error}`);
-          console.error('Sign-in error:', response);
+        if (response.error || response.state !== state) {
+          setSubmissionError(`Google sign-in failed: ${response.error || 'CSRF verification failed'}`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Sign-in error:', response);
+          }
           return;
         }
-        console.log('Access token received:', response.access_token);
         setAccessToken(response.access_token);
         setIsSignedIn(true);
         fetch('https://www.googleapis.com/userinfo/v2/me', {
           headers: { Authorization: `Bearer ${response.access_token}` },
         })
           .then(res => {
-            if (!res.ok) {
-              throw new Error('Failed to fetch user info');
-            }
+            if (!res.ok) throw new Error('Failed to fetch user info');
             return res.json();
           })
           .then(data => {
-            setUserEmail(data.email);
-            setUserName(data.name || data.given_name || 'User');
-            console.log('User signed in:', data.email, 'Name:', data.name);
+            setUserEmail(sanitize(data.email));
+            setUserName(sanitize(data.name || data.given_name || 'User'));
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('User signed in:', data.email, 'Name:', data.name);
+            }
           })
           .catch(err => {
-            setSubmissionError(`Failed to fetch user info: ${err.message}`);
-            console.error('User info error:', err);
+            setSubmissionError(`Failed to fetch user info: ${sanitize(err.message)}`);
+            if (process.env.NODE_ENV !== 'production') {
+              console.error('User info error:', err);
+            }
           });
       },
     });
@@ -597,7 +628,9 @@ const App = () => {
   const handleLogout = () => {
     if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
       window.google.accounts.oauth2.revoke(accessToken, () => {
-        console.log('Access token revoked');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Access token revoked');
+        }
       });
     }
     localStorage.clear();
@@ -622,10 +655,12 @@ const App = () => {
         .then(newId => {
           setCalendarId(newId);
           localStorage.setItem('calendarId', newId);
-          setSubmissionOutput(`${calendarName} calendar found or created successfully!`);
-          console.log('Calendar ID set:', newId);
+          setSubmissionOutput(`${sanitize(calendarName)} calendar found or created successfully!`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Calendar ID set:', newId);
+          }
         })
-        .catch(err => setSubmissionError(err.message));
+        .catch(err => setSubmissionError(sanitize(err.message)));
     }
   }, [isSignedIn, calendarId, devMode, accessToken, calendarName]);
 
@@ -641,14 +676,11 @@ const App = () => {
     return regex.test(id);
   };
 
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  const validateEmail = (email) => isEmail(email);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEvent({ ...event, [name]: value });
+    setEvent({ ...event, [name]: sanitize(value) });
     setSubmissionError('');
     setSubmissionOutput('');
   };
@@ -660,15 +692,15 @@ const App = () => {
   };
 
   const handleCurrencyChange = (e) => {
-    setCurrency(e.target.value);
+    setCurrency(sanitize(e.target.value));
   };
 
   const handleAppTitleChange = (e) => {
-    setAppTitle(e.target.value);
+    setAppTitle(sanitize(e.target.value));
   };
 
   const handleCalendarIdChange = (e) => {
-    const id = e.target.value;
+    const id = sanitize(e.target.value);
     setCalendarId(id);
     if (!validateCalendarId(id) && id) {
       setCalendarIdError('Invalid Calendar ID. It should look like abc123@group.calendar.google.com');
@@ -678,7 +710,7 @@ const App = () => {
   };
 
   const handleCustomCalendarNameChange = (e) => {
-    setCustomCalendarName(e.target.value);
+    setCustomCalendarName(sanitize(e.target.value));
   };
 
   const handleCreateCustomCalendar = async () => {
@@ -692,35 +724,35 @@ const App = () => {
       setCalendarName(customCalendarName);
       localStorage.setItem('calendarId', newId);
       localStorage.setItem('calendarName', customCalendarName);
-      setSubmissionOutput(`${customCalendarName} calendar found or created successfully!`);
+      setSubmissionOutput(`${sanitize(customCalendarName)} calendar found or created successfully!`);
       setShowCustomCalendarInput(false);
       setCustomCalendarName('');
     } catch (err) {
-      setSubmissionError(err.message);
+      setSubmissionError(sanitize(err.message));
     }
   };
 
   const handleCalendarSelect = (calendar) => {
-    setCalendarId(calendar.id);
-    setCalendarName(calendar.summary);
+    setCalendarId(sanitize(calendar.id));
+    setCalendarName(sanitize(calendar.summary));
     localStorage.setItem('calendarId', calendar.id);
     localStorage.setItem('calendarName', calendar.summary);
     setShowCalendarList(false);
-    setSubmissionOutput(`Selected calendar: ${calendar.summary}`);
+    setSubmissionOutput(`Selected calendar: ${sanitize(calendar.summary)}`);
   };
 
   const handleShareEmailChange = (e) => {
-    setShareEmail(e.target.value);
+    setShareEmail(sanitize(e.target.value));
     setShareError('');
     setShareSuccess('');
   };
 
   const handleInputGradientChange = (e) => {
-    setInputGradient(e.target.value);
+    setInputGradient(sanitize(e.target.value));
   };
 
   const handleButtonGradientChange = (e) => {
-    setButtonGradient(e.target.value);
+    setButtonGradient(sanitize(e.target.value));
   };
 
   const handleDefaultColors = () => {
@@ -743,7 +775,7 @@ const App = () => {
     }
     try {
       await shareSchedularrCalendar(calendarId, shareEmail, accessToken, handleInvalidToken);
-      setShareSuccess(`Calendar shared successfully with ${shareEmail}!`);
+      setShareSuccess(`Calendar shared successfully with ${sanitize(shareEmail)}!`);
       setShareEmail('');
       const updatedUsers = await fetchSharedUsers(calendarId, accessToken, handleInvalidToken);
       setSharedUsers(updatedUsers);
@@ -751,7 +783,7 @@ const App = () => {
         setShareSuccess('');
       }, 10000);
     } catch (err) {
-      setShareError(err.message);
+      setShareError(sanitize(err.message));
       setTimeout(() => {
         setShareError('');
       }, 10000);
@@ -769,7 +801,9 @@ const App = () => {
       const isoDate = `${year}-${month}-${day}`;
       const start = new Date(`${isoDate}T${event.startTime}`);
       if (isNaN(start.getTime())) {
-        console.error('Invalid date format:', `${isoDate}T${event.startTime}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Invalid date format:', `${isoDate}T${event.startTime}`);
+        }
         setTimeError('Invalid date or time format.');
         return;
       }
@@ -822,8 +856,8 @@ const App = () => {
           return;
         }
         const eventData = {
-          summary: event.name || 'Test Event',
-          description: `Duration: ${event.duration} hours\nFee: ${currency}${cost}${event.note ? `\nNote: ${event.note}` : ''}`,
+          summary: sanitize(event.name) || 'Test Event',
+          description: `Duration: ${event.duration} hours\nFee: ${sanitize(currency)}${cost}${event.note ? `\nNote: ${sanitize(event.note)}` : ''}`,
           start: {
             dateTime: `${event.startDate}T${event.startTime}:00Z`,
             timeZone: 'UTC',
@@ -833,7 +867,7 @@ const App = () => {
             timeZone: 'UTC',
           },
         };
-        const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+        const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(sanitize(calendarId))}/events`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -841,6 +875,10 @@ const App = () => {
           },
           body: JSON.stringify(eventData),
         });
+        if (response.status === 401 || response.status === 403) {
+          handleInvalidToken();
+          return;
+        }
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error.message);
@@ -848,9 +886,9 @@ const App = () => {
         const result = await response.json();
         apiResponse = `Event created: ${result.htmlLink}`;
       } catch (err) {
-        apiResponse = `Error: ${err.message}`;
+        apiResponse = `Error: ${sanitize(err.message)}`;
         if (!devMode) {
-          errors.push(`Failed to create event: ${err.message}`);
+          errors.push(`Failed to create event: ${sanitize(err.message)}`);
         }
       }
     }
@@ -867,7 +905,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
       }, 10000);
       return;
     }
-    console.log('Submitting event to Google Calendar:', JSON.stringify(submissionData, null, 2));
     if (typeof confetti !== 'undefined') {
       setShowConfetti(true);
       confetti({
@@ -881,7 +918,9 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
         setShowConfetti(false);
       }, 10000);
     } else {
-      console.warn('Confetti library not loaded; skipping animation.');
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Confetti library not loaded; skipping animation.');
+      }
     }
     setCalendarKey(prevKey => prevKey + 1);
     setEvent({
@@ -899,13 +938,15 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
   const toggleCalendar = () => {
     setShowCalendar(!showCalendar);
     if (!showCalendar && calendarId) {
-      console.log('Showing calendar with src:', `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=UTC`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Showing calendar with src:', `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=UTC`);
+      }
     }
   };
 
   const openCalendarLink = () => {
     if (calendarId) {
-      window.open(`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=UTC`, '_blank');
+      window.open(`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(sanitize(calendarId))}&ctz=UTC`, '_blank');
     }
   };
 
@@ -941,7 +982,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <div className="gsi-material-button-content-wrapper">
               <div className="gsi-material-button-icon">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style={{ display: 'block' }}>
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 peso9.5z"></path>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
@@ -963,7 +1004,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
         <>
           <div className="text-center mb-4 flex flex-col items-center">
             <Tooltip message="I am tooltip 🚀" position="bottom">
-              <p className="text-lg text-gray-300 mb-2">Welcome, {userName}!</p>
+              <p className="text-lg text-gray-300 mb-2">Welcome, {sanitize(userName)}!</p>
             </Tooltip>
             <h1 className="text-4xl font-extrabold flex items-center">
               <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Schedularr</span>
@@ -984,7 +1025,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
             <TabsContent tabValue="booking" value={activeTab}>
               <Card className="w-full max-w-[400px] mx-auto">
                 <CardHeader>
-                  <CardTitle inputGradient={inputGradient}>{appTitle}</CardTitle>
+                  <CardTitle inputGradient={inputGradient}>{sanitize(appTitle)}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {timeError && (
@@ -1132,9 +1173,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">*</span>
                       </div>
                     </div>
-
                     <Divider inputGradient={inputGradient} label="Auto Calculated" />
-
                     <div className="flex items-center">
                       <Tooltip message="[auto] End time ⏰" position="bottom">
                         <span className={cn(
@@ -1163,7 +1202,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">end</span>
                       </div>
                     </div>
-
                     <div className="flex items-center">
                       <Tooltip message="[auto] Currency & Fee 💰/🍰" position="bottom">
                         <span className={cn(
@@ -1202,9 +1240,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         </div>
                       </div>
                     </div>
-
                     <Divider inputGradient={inputGradient} label="Notes" />
-
                     <div className="flex items-center">
                       <Tooltip message="Notes 📝" position="bottom">
                         <span className={cn(
@@ -1249,7 +1285,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                 </CardContent>
               </Card>
             </TabsContent>
-
             <TabsContent tabValue="settings" value={activeTab}>
               <Card className="w-full max-w-[400px] mx-auto">
                 <CardHeader>
@@ -1327,7 +1362,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                       )}>calendar_today</span>
                       {calendarId ? (
                         <div className="flex items-center gap-x-4">
-                          <p className="text-white cursor-pointer hover:underline" onClick={openCalendarLink}>{calendarName}</p>
+                          <p className="text-white cursor-pointer hover:underline" onClick={openCalendarLink}>{sanitize(calendarName)}</p>
                           <Button
                             variant="text"
                             className={cn(
@@ -1381,14 +1416,14 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                               .then(id => {
                                 setCalendarId(id);
                                 localStorage.setItem('calendarId', id);
-                                setSubmissionOutput(`${calendarName} calendar found or created successfully!`);
+                                setSubmissionOutput(`${sanitize(calendarName)} calendar found or created successfully!`);
                               })
-                              .catch(err => setSubmissionError(err.message))
+                              .catch(err => setSubmissionError(sanitize(err.message)))
                             }
                             className="mb-2 w-full"
                             buttonGradient={buttonGradient}
                           >
-                            Create {calendarName} Calendar
+                            Create {sanitize(calendarName)} Calendar
                           </Button>
                           <p className="text-sm text-gray-400 mb-2">Or enter an existing Calendar ID:</p>
                           <Textarea
@@ -1459,12 +1494,11 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         >
                           <option value="">Select a calendar...</option>
                           {calendarList.map(calendar => (
-                            <option key={calendar.id} value={calendar.id}>{calendar.summary}</option>
+                            <option key={calendar.id} value={calendar.id}>{sanitize(calendar.summary)}</option>
                           ))}
                         </select>
                       </div>
                     )}
-
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1525,7 +1559,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                           inputGradient === 'white' ? 'text-gray-600' :
                           'text-blue-400'
                         )}>
-                          <span className="font-bold">Shared with:</span> {sharedUsers.join(', ')}
+                          <span className="font-bold">Shared with:</span> {sanitize(sharedUsers.join(', '))}
                         </p>
                       </div>
                     )}
@@ -1548,9 +1582,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         {shareSuccess}
                       </Alert>
                     )}
-
                     <Divider inputGradient={inputGradient} label="Hourly Rate & Currency" />
-
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1579,7 +1611,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">/ hr</span>
                       </div>
                     </div>
-
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1606,7 +1637,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">£ $ 🍺</span>
                       </div>
                     </div>
-
                     <Divider inputGradient={inputGradient} label="Colour Themes" />
                     <ColourDropdown
                       value={inputGradient}
@@ -1643,9 +1673,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         Default Colors
                       </Button>
                     </div>
-
                     <Divider inputGradient={inputGradient} label="<Dev> Mode" />
-
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1675,7 +1703,6 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               </Card>
             </TabsContent>
           </Tabs>
-
           <Button
             onClick={toggleCalendar}
             variant="gradient"
@@ -1690,7 +1717,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               {calendarId ? (
                 <iframe
                   key={calendarKey}
-                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=UTC`}
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(sanitize(calendarId))}&ctz=UTC`}
                   style={{ border: 0 }}
                   width="100%"
                   height="400"

@@ -48,7 +48,7 @@ const RandomEnding = () => {
   // Render the structure with tagline, gap, and follow-up
   return (
     <>
-      <div classname="">
+      <div className="">
       <p className="text-base text-gray-300 mb-1 break-words">
          {randomTagline}
       </p>
