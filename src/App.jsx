@@ -83,7 +83,7 @@ const findSchedularrCalendar = async (accessToken, calendarName = 'Schedularr', 
     }
     const data = await response.json();
     const schedularrCalendar = data.items.find(cal => cal.summary === calendarName);
-    return schedularrCalendar ? schedularrCalendar.id : null;
+    return schedularrCalendar ? { id: schedularrCalendar.id, timeZone: schedularrCalendar.timeZone } : null;
   } catch (err) {
     if (process.env.NODE_ENV !== 'production') {
       console.error('Calendar list error:', err);
@@ -100,13 +100,13 @@ const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr'
       onInvalidToken();
       throw new Error('Invalid access token');
     }
-    const existingId = await findSchedularrCalendar(accessToken, calendarName, onInvalidToken);
-    if (existingId) {
-      return existingId;
+    const existingCalendar = await findSchedularrCalendar(accessToken, calendarName, onInvalidToken);
+    if (existingCalendar) {
+      return existingCalendar.id;
     }
     const uniqueName = attempt > 0 ? `${calendarName} ${attempt}` : calendarName;
-    const existingUniqueId = await findSchedularrCalendar(accessToken, uniqueName, onInvalidToken);
-    if (existingUniqueId) {
+    const existingUniqueCalendar = await findSchedularrCalendar(accessToken, uniqueName, onInvalidToken);
+    if (existingUniqueCalendar) {
       return createSchedularrCalendar(accessToken, calendarName, attempt + 1, onInvalidToken);
     }
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
@@ -118,7 +118,7 @@ const createSchedularrCalendar = async (accessToken, calendarName = 'Schedularr'
       body: JSON.stringify({
         summary: sanitize(uniqueName),
         description: `Calendar for ${sanitize(uniqueName)} bookings`,
-        timeZone: 'UTC',
+        timeZone: 'Europe/London', // Set to UK timezone
       }),
     });
     if (response.status === 401 || response.status === 403) {
@@ -231,6 +231,34 @@ const fetchSharedUsers = async (calendarId, accessToken, onInvalidToken, retries
     }
   }
   return JSON.parse(localStorage.getItem('sharedUsers') || '[]');
+};
+
+// Fetch calendar timezone
+const fetchCalendarTimezone = async (calendarId, accessToken, onInvalidToken) => {
+  try {
+    const isValidToken = await validateAccessToken(accessToken);
+    if (!isValidToken) {
+      onInvalidToken();
+      return 'Europe/London'; // Fallback to UK timezone
+    }
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(sanitize(calendarId))}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (response.status === 401 || response.status === 403) {
+      onInvalidToken();
+      return 'Europe/London';
+    }
+    if (!response.ok) {
+      throw new Error(`Failed to fetch calendar details: HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    return data.timeZone || 'Europe/London';
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Calendar timezone fetch error:', err);
+    }
+    return 'Europe/London';
+  }
 };
 
 // Shadcn UI Components with hover animations
@@ -428,6 +456,7 @@ const App = () => {
   const [calendarName, setCalendarName] = useState(() => {
     return localStorage.getItem('calendarName') || 'Schedularr';
   });
+  const [calendarTimezone, setCalendarTimezone] = useState('Europe/London');
   const [customCalendarName, setCustomCalendarName] = useState('');
   const [showCustomCalendarInput, setShowCustomCalendarInput] = useState(false);
   const [showCalendarList, setShowCalendarList] = useState(false);
@@ -501,6 +530,9 @@ const App = () => {
     if (calendarId && accessToken && isSignedIn) {
       fetchSharedUsers(calendarId, accessToken, handleInvalidToken).then(users => {
         setSharedUsers(users);
+      });
+      fetchCalendarTimezone(calendarId, accessToken, handleInvalidToken).then(timezone => {
+        setCalendarTimezone(timezone);
       });
     } else if (!calendarId) {
       const cached = JSON.parse(localStorage.getItem('sharedUsers') || '{}');
@@ -640,6 +672,7 @@ const App = () => {
     setUserName('');
     setCalendarId('');
     setCalendarName('Schedularr');
+    setCalendarTimezone('Europe/London');
     setSubmissionError('');
     setSubmissionOutput('');
     setShareError('');
@@ -735,6 +768,7 @@ const App = () => {
   const handleCalendarSelect = (calendar) => {
     setCalendarId(sanitize(calendar.id));
     setCalendarName(sanitize(calendar.summary));
+    setCalendarTimezone(calendar.timeZone || 'Europe/London');
     localStorage.setItem('calendarId', calendar.id);
     localStorage.setItem('calendarName', calendar.summary);
     setShowCalendarList(false);
@@ -859,12 +893,12 @@ const App = () => {
           summary: sanitize(event.name) || 'Test Event',
           description: `Duration: ${event.duration} hours\nFee: ${sanitize(currency)}${cost}${event.note ? `\nNote: ${sanitize(event.note)}` : ''}`,
           start: {
-            dateTime: `${event.startDate}T${event.startTime}:00Z`,
-            timeZone: 'UTC',
+            dateTime: `${event.startDate}T${event.startTime}:00`,
+            timeZone: calendarTimezone,
           },
           end: {
-            dateTime: `${endDate}T${endTime}:00Z`,
-            timeZone: 'UTC',
+            dateTime: `${endDate}T${endTime}:00`,
+            timeZone: calendarTimezone,
           },
         };
         const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(sanitize(calendarId))}/events`, {
@@ -939,14 +973,14 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
     setShowCalendar(!showCalendar);
     if (!showCalendar && calendarId) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('Showing calendar with src:', `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=UTC`);
+        console.log('Showing calendar with src:', `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=${encodeURIComponent(calendarTimezone)}`);
       }
     }
   };
 
   const openCalendarLink = () => {
     if (calendarId) {
-      window.open(`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(sanitize(calendarId))}&ctz=UTC`, '_blank');
+      window.open(`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(sanitize(calendarId))}&ctz=${encodeURIComponent(calendarTimezone)}`, '_blank');
     }
   };
 
@@ -1343,9 +1377,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
                         inputGradient={inputGradient}
                       />
                     </div>
-
                     <Divider inputGradient={inputGradient} label="Calendar & Sharing" />
-
                     <div className="flex items-center">
                       <span className={cn(
                         "material-icons mr-3 transition-transform duration-300 hover:scale-125 p-1",
@@ -1717,7 +1749,7 @@ Status: ${errors.length > 0 && !devMode ? 'Failed due to errors' : 'Event sent t
               {calendarId ? (
                 <iframe
                   key={calendarKey}
-                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(sanitize(calendarId))}&ctz=UTC`}
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(sanitize(calendarId))}&ctz=${encodeURIComponent(calendarTimezone)}`}
                   style={{ border: 0 }}
                   width="100%"
                   height="400"
